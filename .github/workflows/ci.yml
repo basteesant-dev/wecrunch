@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      # Integration setup applies every migration to a fresh database and fails
+      # if schema.prisma has changes that no migration captures.
+      - name: Unit + integration tests (throwaway PostgreSQL, migration drift check)
+        run: npm test
+      - name: Install Playwright browser
+        run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: End-to-end tests (migrate, seed, production build, Playwright)
+        run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+
+  # Deploy only after verification. Configure the secrets in the repository
+  # settings; see docs/DEPLOYMENT.md for the full procedure and rollback.
+  migrate:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Apply database migrations
+        run: npm run db:deploy
+        env:
+          WECRUNCH_DATABASE_URL: ${{ secrets.WECRUNCH_DATABASE_URL }}

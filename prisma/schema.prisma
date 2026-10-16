@@ -1,0 +1,468 @@
+// WeCrunch CMS schema. Owned exclusively by the WeCrunch application and its own
+// PostgreSQL database (WECRUNCH_DATABASE_URL). Never point another brand at it.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------- access
+
+enum Role {
+  SUPER_ADMIN
+  CONTENT_EDITOR
+  ENQUIRY_MANAGER
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         Role
+  isActive     Boolean   @default(true)
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions        Session[]
+  auditLogs       AuditLog[]
+  ownedEnquiries  FranchiseEnquiry[]
+  enquiryNotes    EnquiryNote[]
+  pagesCreated    Page[]             @relation("PageCreatedBy")
+  pagesUpdated    Page[]             @relation("PageUpdatedBy")
+  revisions       PageRevision[]
+  mediaUploaded   MediaAsset[]
+}
+
+model Session {
+  id        String   @id // sha256 of the cookie token; the raw token is never stored
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id         String     @id @default(cuid())
+  userId     String?
+  user       AdminUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userEmail  String?
+  action     String // e.g. page.publish, enquiry.export, auth.login_failed
+  entityType String?
+  entityId   String?
+  summary    String?
+  meta       Json?
+  ip         String?
+  createdAt  DateTime   @default(now())
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+  @@index([userId])
+}
+
+model RateLimit {
+  key         String   @id
+  count       Int
+  windowStart DateTime
+}
+
+// ---------------------------------------------------------------- geography
+
+enum StateStatus {
+  ACTIVE // full landing page
+  ENQUIRY_ONLY // availability message + enquiry form
+  COMING_SOON // coming-soon message + enquiry form
+  UNAVAILABLE // listed, but enquiries are not accepted
+  DRAFT // hidden from visitors; URL returns 404
+}
+
+model State {
+  id                  String      @id @default(cuid())
+  name                String      @unique
+  slug                String      @unique
+  status              StateStatus @default(ENQUIRY_ONLY)
+  sortOrder           Int         @default(0)
+  landingPageId       String?
+  landingPage         Page?       @relation("StateLanding", fields: [landingPageId], references: [id], onDelete: SetNull)
+  // Contact overrides; empty values fall back to the landing page, then site settings.
+  phone               String?
+  whatsapp            String?
+  email               String?
+  availabilityMessage String?
+  seoTitle            String?
+  seoDescription      String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  cities    City[]
+  sections  PageSection[]      @relation("SectionStates")
+  enquiries FranchiseEnquiry[]
+
+  @@index([status, sortOrder])
+}
+
+model City {
+  id        String  @id @default(cuid())
+  stateId   String
+  state     State   @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  name      String
+  slug      String
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  @@unique([stateId, slug])
+}
+
+// ---------------------------------------------------------------- pages
+
+enum PageStatus {
+  DRAFT // never published
+  PUBLISHED
+  UNPUBLISHED // taken offline; revisions kept
+}
+
+enum RevisionStatus {
+  PUBLISHED // the single live revision of a page
+  SCHEDULED
+  SUPERSEDED
+}
+
+model Page {
+  id             String     @id @default(cuid())
+  slug           String     @unique // "home" renders at "/"
+  title          String
+  status         PageStatus @default(DRAFT)
+  seoTitle       String?
+  seoDescription String?
+  ogImageId      String?
+  canonicalUrl   String?
+  noIndex        Boolean    @default(false)
+  // Landing-level contact overrides (e.g. the North market phone line).
+  phone          String?
+  whatsapp       String?
+  email          String?
+  createdById    String?
+  createdBy      AdminUser? @relation("PageCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById    String?
+  updatedBy      AdminUser? @relation("PageUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  sections  PageSection[] // the editable draft
+  revisions PageRevision[]
+  states    State[]        @relation("StateLanding")
+}
+
+model PageSection {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type      String // key into the section registry
+  // Optional override key: a state-scoped section with the same key replaces the
+  // brand-wide one for visitors of that state.
+  key       String?
+  sortOrder Int
+  isHidden  Boolean  @default(false)
+  content   Json     @db.JsonB
+  settings  Json     @db.JsonB
+  states    State[]  @relation("SectionStates") // empty = all states
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageId, sortOrder])
+}
+
+model PageRevision {
+  id          String         @id @default(cuid())
+  pageId      String
+  page        Page           @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  version     Int
+  status      RevisionStatus
+  snapshot    Json           @db.JsonB // page meta + sections, validated on write
+  note        String?
+  publishAt   DateTime?
+  publishedAt DateTime?
+  createdById String?
+  createdBy   AdminUser?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime       @default(now())
+
+  @@unique([pageId, version])
+  @@index([pageId, status])
+  @@index([status, publishAt])
+}
+
+model Redirect {
+  id        String   @id @default(cuid())
+  fromPath  String   @unique
+  toPath    String
+  permanent Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NavigationMenu {
+  id    String           @id @default(cuid())
+  key   String           @unique // header | footer
+  name  String
+  items NavigationItem[]
+}
+
+model NavigationItem {
+  id           String         @id @default(cuid())
+  menuId       String
+  menu         NavigationMenu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  label        String
+  href         String
+  openInNewTab Boolean        @default(false)
+  isVisible    Boolean        @default(true)
+  sortOrder    Int            @default(0)
+}
+
+// Singleton row (id = "site"); `data` is validated by the settings schema in code.
+model SiteSetting {
+  id        String   @id
+  data      Json     @db.JsonB
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------- media
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+model MediaAsset {
+  id          String     @id @default(cuid())
+  provider    String // local | blob
+  key         String     @unique // storage object key
+  url         String // public URL (cache-busted on replace)
+  filename    String
+  mimeType    String
+  kind        MediaKind
+  size        Int
+  width       Int?
+  height      Int?
+  alt         String     @default("")
+  folder      String     @default("general")
+  createdById String?
+  createdBy   AdminUser? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  menuItems    MenuItem[]
+  galleryItems GalleryItem[]
+  testimonials Testimonial[]
+
+  @@index([folder, createdAt])
+}
+
+// ---------------------------------------------------------------- catalogue
+
+model Menu {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  description String?
+  isPublished Boolean        @default(true)
+  updatedAt   DateTime       @updatedAt
+  categories  MenuCategory[]
+}
+
+model MenuCategory {
+  id        String     @id @default(cuid())
+  menuId    String
+  menu      Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int        @default(0)
+  items     MenuItem[]
+
+  @@index([menuId, sortOrder])
+}
+
+model MenuItem {
+  id          String       @id @default(cuid())
+  categoryId  String
+  category    MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  price       Decimal?     @db.Decimal(10, 2)
+  imageId     String?
+  image       MediaAsset?  @relation(fields: [imageId], references: [id], onDelete: Restrict)
+  isAvailable Boolean      @default(true)
+  sortOrder   Int          @default(0)
+
+  @@index([categoryId, sortOrder])
+}
+
+model Gallery {
+  id        String        @id @default(cuid())
+  name      String
+  slug      String        @unique
+  updatedAt DateTime      @updatedAt
+  items     GalleryItem[]
+}
+
+model GalleryItem {
+  id        String     @id @default(cuid())
+  galleryId String
+  gallery   Gallery    @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  mediaId   String
+  media     MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  caption   String?
+  sortOrder Int        @default(0)
+
+  @@index([galleryId, sortOrder])
+}
+
+model Testimonial {
+  id          String      @id @default(cuid())
+  name        String
+  location    String?
+  quote       String
+  rating      Int         @default(5)
+  photoId     String?
+  photo       MediaAsset? @relation(fields: [photoId], references: [id], onDelete: Restrict)
+  tag         String? // free-form grouping, e.g. "tamilnadu" or "north"
+  isPublished Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Faq {
+  id          String   @id @default(cuid())
+  question    String
+  answer      String // sanitised HTML
+  tag         String?
+  isPublished Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------- franchise
+
+model FranchiseModel {
+  id              String                    @id @default(cuid())
+  name            String
+  slug            String                    @unique
+  totalInvestment String // display value, e.g. "3.75 Lakhs"
+  area            String?
+  expansion       String?
+  roi             String?
+  payback         String?
+  royalty         String?
+  isPublished     Boolean                   @default(true)
+  updatedAt       DateTime                  @updatedAt
+  breakdown       FranchiseInvestmentItem[]
+}
+
+model FranchiseInvestmentItem {
+  id        String         @id @default(cuid())
+  modelId   String
+  model     FranchiseModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  label     String
+  value     String
+  note      String?
+  icon      String?
+  sortOrder Int            @default(0)
+
+  @@index([modelId, sortOrder])
+}
+
+// ---------------------------------------------------------------- enquiries
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  FOLLOW_UP
+  CONVERTED
+  CLOSED
+}
+
+model EnquiryForm {
+  id               String             @id @default(cuid())
+  name             String
+  slug             String             @unique
+  title            String
+  submitLabel      String             @default("Submit Enquiry")
+  successMessage   String
+  fields           Json               @db.JsonB // extra questions, validated in code
+  showState        Boolean            @default(true)
+  showMessage      Boolean            @default(true)
+  requireConsent   Boolean            @default(true)
+  consentText      String?
+  sendConfirmation Boolean            @default(false)
+  notifyEmails     String[]
+  updatedAt        DateTime           @updatedAt
+  enquiries        FranchiseEnquiry[]
+}
+
+model FranchiseEnquiry {
+  id            String        @id @default(cuid())
+  formId        String?
+  form          EnquiryForm?  @relation(fields: [formId], references: [id], onDelete: SetNull)
+  fullName      String
+  email         String
+  phone         String // E.164
+  // Deleting a state keeps the lead: the FK is nulled and the name snapshot remains.
+  stateId       String?
+  state         State?        @relation(fields: [stateId], references: [id], onDelete: SetNull)
+  stateName     String?
+  city          String?
+  message       String?
+  answers       Json          @default("{}") @db.JsonB
+  consent       Boolean       @default(false)
+  consentText   String?
+  sourcePath    String?
+  landingPage   String?
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  utmTerm       String?
+  utmContent    String?
+  trafficSource String?
+  referrer      String?
+  ipHash        String?
+  userAgent     String?
+  status        EnquiryStatus @default(NEW)
+  ownerId       String?
+  owner         AdminUser?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  followUpAt    DateTime?
+  anonymizedAt  DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  notes         EnquiryNote[]
+
+  @@index([status, createdAt])
+  @@index([stateId, createdAt])
+  @@index([phone, createdAt])
+  @@index([createdAt])
+}
+
+model EnquiryNote {
+  id        String           @id @default(cuid())
+  enquiryId String
+  enquiry   FranchiseEnquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    AdminUser?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body      String
+  createdAt DateTime         @default(now())
+
+  @@index([enquiryId, createdAt])
+}

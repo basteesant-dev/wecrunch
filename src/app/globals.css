@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+/*
+ * WeCrunch visual language: "crinkle-cut street food".
+ * Crunch yellow, fried-crust brown (used as ink instead of black), ketchup red
+ * from the logo's comb, batter white. Takeaway-box outlines with hard offset
+ * shadows, crinkle-cut zigzag edges and round stickers. See docs/design-system.md.
+ */
+@theme {
+  --color-yolk: #ffd400;
+  --color-yolk-soft: #fff1a8;
+  --color-crust: #3a2312;
+  --color-crust-soft: #6b4a2e;
+  --color-ketchup: #d7261e;
+  --color-ketchup-deep: #b51d16;
+  --color-batter: #fffbef;
+  --color-white: #ffffff;
+  --color-danger: #b42318;
+
+  /* Generic aliases used by shared admin/utility markup. */
+  --color-ink: var(--color-crust);
+  --color-line: #e8dcc0;
+  --color-accent: var(--color-ketchup);
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body);
+
+  --radius-control: 0.625rem;
+  /* Halves the side margins a fixed 76rem column would leave: W - (W - 76rem) / 2. */
+  --container-content: calc(50vw + 38rem);
+
+  --shadow-box: 6px 6px 0 var(--color-crust);
+  --shadow-box-sm: 4px 4px 0 var(--color-crust);
+  --shadow-box-yolk: 6px 6px 0 var(--color-yolk);
+
+  --text-mega: clamp(2.7rem, 1.5rem + 4.6vw, 5.4rem);
+  --text-mega--line-height: 0.95;
+  --text-title: clamp(2.1rem, 1.5rem + 2.4vw, 3.6rem);
+  --text-title--line-height: 1;
+
+  --animate-band: band 32s linear infinite;
+  --animate-band-reverse: band 32s linear infinite reverse;
+  @keyframes band {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+}
+
+/* Desktop screens with little height (e.g. 1366x768 laptops): the hero tightens up so it fits. */
+@custom-variant short (@media (min-width: 64rem) and (max-height: 760px));
+
+@layer base {
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--color-batter);
+    color: var(--color-crust);
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.025em; }
+  :focus-visible { outline: 3px solid var(--color-ketchup); outline-offset: 3px; }
+  [id] { scroll-margin-top: 6rem; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+/*
+ * Sections melt into their neighbours so the page reads as one continuous
+ * surface. SitePage sets --edge-top/--edge-bottom (the colour shared with the
+ * section above/below); each Section sets --own.
+ */
+.blend { position: relative; isolation: isolate; --blend-size: 4rem; }
+/* A layer 1px taller than the section at each end, so a fractional pixel edge
+   never lets the plain background colour show as a thin line. */
+.blend::before {
+  content: "";
+  position: absolute;
+  inset: -1px 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: linear-gradient(
+    to bottom,
+    var(--edge-top, var(--own)),
+    var(--own) var(--blend-size),
+    var(--own) calc(100% - var(--blend-size)),
+    var(--edge-bottom, var(--own))
+  );
+}
+@media (min-width: 48rem) { .blend { --blend-size: 6rem; } }
+/* For full-bleed sections with their own backdrop (hero, state selector). */
+.blend-bottom { background: linear-gradient(to bottom, transparent, var(--edge-bottom, transparent)); height: 4rem; }
+@media (min-width: 48rem) { .blend-bottom { height: 6rem; } }
+
+/* Optional highlighted words: a yellow marker box. */
+.hl { background: var(--color-yolk); color: var(--color-crust); padding-inline: 0.12em; box-decoration-break: clone; }
+
+/* Takeaway-box surfaces. */
+.box { border: 3px solid var(--color-crust); border-radius: 1rem; box-shadow: var(--shadow-box); }
+.box-flat { border: 3px solid var(--color-crust); border-radius: 1rem; }
+
+/* Crinkle-cut (zigzag) edges, like crinkle fries. */
+.crinkle-bottom {
+  --z: 22px;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / var(--z) 100%;
+  padding-bottom: calc(var(--z) + 3rem);
+}
+.crinkle-top {
+  --z: 22px;
+  mask: conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 50% / var(--z) 100%;
+  padding-top: calc(var(--z) + 3rem);
+}
+
+/* Round stickers. */
+.sticker {
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 3px solid var(--color-crust);
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Testimonial speech bubbles. */
+.bubble { position: relative; }
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 2.25rem;
+  bottom: -14px;
+  width: 24px;
+  height: 24px;
+  background: inherit;
+  border-right: 3px solid var(--color-crust);
+  border-bottom: 3px solid var(--color-crust);
+  transform: rotate(45deg);
+}
+
+/* Enquiry form inside a box. */
+.form-card { background: var(--color-white); color: var(--color-crust); }
+.form-card .field-label { color: var(--color-crust); }
+.btn-submit { background: var(--color-ketchup); color: #fff; border: 3px solid var(--color-crust); box-shadow: var(--shadow-box-sm); }
+.btn-submit:hover { background: var(--color-ketchup-deep); }
+.btn-submit:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--color-crust); }
+
+/* Rich text from the CMS. */
+.prose-cms { line-height: 1.75; }
+.prose-cms h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; margin: 2.25rem 0 0.75rem; }
+.prose-cms h3 { font-weight: 700; font-size: 1.15rem; margin: 1.75rem 0 0.5rem; }
+.prose-cms p { margin: 0 0 1rem; }
+.prose-cms ul { list-style: disc; padding-left: 1.4rem; margin: 0 0 1rem; }
+.prose-cms ol { list-style: decimal; padding-left: 1.4rem; margin: 0 0 1rem; }
+.prose-cms li { margin: 0.25rem 0; }
+.prose-cms a { color: var(--color-ketchup-deep); text-decoration: underline; text-underline-offset: 3px; }
+.on-crust .prose-cms a { color: var(--color-yolk); }
+
+/* CMS screens use the system UI font, not the brand fonts. */
+.admin-ui, .admin-ui h1, .admin-ui h2, .admin-ui h3 { font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif; letter-spacing: normal; }
+.admin-ui { font-size: 0.9375rem; line-height: 1.5; }
+.admin-ui h1, .admin-ui h2, .admin-ui h3 { font-weight: 600; }
