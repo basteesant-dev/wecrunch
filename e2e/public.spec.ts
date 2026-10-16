@@ -9,7 +9,7 @@ test("home page routes a visitor to their state page", async ({ page }) => {
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page).toHaveURL(/\/kerala$/);
   await expect(page).toHaveTitle(/Kerala/);
-  // Kerala uses the North landing page and keeps Kerala as its context.
+  // Kerala uses page and keeps Kerala as its context.
   await expect(page.getByText("3.79 Lakhs (Excluding Interior)")).toBeVisible();
   await expect(page.locator("#enquiry select[name=stateSlug]")).toHaveValue("kerala");
 });
