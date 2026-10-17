@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Figtree } from "next/font/google";
+import { Bricolage_Grotesque, Figtree, League_Spartan, Poppins } from "next/font/google";
 import { getMediaUrl, getSettings } from "@/lib/content";
 import "./globals.css";
 
 // Bricolage Grotesque (heavy, tight) for display, Figtree for text.
 const display = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"], weight: ["600", "700", "800"], display: "swap" });
 const body = Figtree({ variable: "--font-figtree", subsets: ["latin"], weight: ["400", "500", "600", "700"], display: "swap" });
+// The printed menu card's fonts: League Spartan for category labels, Poppins for items.
+const menuDisplay = League_Spartan({ variable: "--font-league-spartan", subsets: ["latin"], weight: ["700", "800"], display: "swap" });
+const menuBody = Poppins({ variable: "--font-poppins", subsets: ["latin"], weight: ["400", "500", "600"], display: "swap" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
@@ -23,7 +26,7 @@ export const viewport: Viewport = { themeColor: "#3a2312", width: "device-width"
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-IN" className={`${display.variable} ${body.variable} antialiased`}>
+    <html lang="en-IN" className={`${display.variable} ${body.variable} ${menuDisplay.variable} ${menuBody.variable} antialiased`}>
       <body className="min-h-dvh">{children}</body>
     </html>
   );

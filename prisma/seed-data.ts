@@ -59,23 +59,20 @@ const PRODUCTS: [string, string][] = [
 
 // REVIEW: illustrative cost model, chosen to agree with the "more than 40%" margin
 // and "6 to 8 months" payback claims. Replace with figures from the franchise team.
-const roi = (tn: boolean) => ({
+const roi = (tn: boolean) => {
+  const fixed = { salary: 20000, rent: 12000, electricity: 0, royalty: tn ? 0 : 5000 };
+  return {
   eyebrow: "Sales & revenue forecast",
   heading: "Calculate your profit from your daily sales",
   highlight: "your profit",
-  intro: "Illustrative monthly performance across three sales scenarios, then run your own numbers through the calculator.",
+  intro: "Illustrative monthly performance across three sales scenarios. Pick one to load its numbers into the calculator, then run your own.",
   investment: tn ? 380000 : 379000,
-  dailySales: 5500,
   daysPerMonth: 30,
+  defaultScenario: 2,
   scenarios: [
-    { label: "Conservative", dailySales: 4000 },
-    { label: "Realistic", dailySales: 5500 },
-    { label: "Strong", dailySales: 8000 },
-  ],
-  fixedCosts: [
-    { label: "Rent", amount: 12000, note: "" },
-    { label: "Staff salary", amount: 20000, note: "" },
-    tn ? { label: "Royalty", amount: 0, note: "Zero royalty" } : { label: "Royalty", amount: 5000, note: "From the 7th month" },
+    { label: "Conservative", subtitle: "", dailySales: 4000, ...fixed },
+    { label: "Realistic", subtitle: "", dailySales: 5500, ...fixed },
+    { label: "Strong", subtitle: "", dailySales: 8000, ...fixed },
   ],
   variableCosts: [
     { label: "Raw materials & packaging", percent: 30, note: "" },
@@ -83,8 +80,9 @@ const roi = (tn: boolean) => ({
     { label: "Maintenance", percent: 2, note: "" },
     { label: "Marketing", percent: 2, note: "" },
   ],
-  disclaimer: `Figures are illustrative and may vary by location, footfall and operating costs. Investment shown excludes GST${tn ? "" : " and interior"}.`,
-});
+  disclaimer: `Figures are illustrative and may vary by location, footfall and operating costs. Investment shown excludes GST${tn ? "" : " and interior"}.${tn ? "" : " Royalty applies from the 7th month."}`,
+  };
+};
 
 function landingSections(market: "tamilnadu" | "north"): Section[] {
   const tn = market === "tamilnadu";
@@ -97,6 +95,7 @@ function landingSections(market: "tamilnadu" | "north"): Section[] {
         eyebrow: "Profit Margin, More Than 40%",
         backdropText: "Born in South. Loved from Kashmir to Kanyakumari",
         heading: "Start your own high profitable fried chicken franchise",
+        priceTag: `₹${tn ? "3.80" : "3.79"} Lakhs + GST`,
         background: "@media:hero-bg",
         showPhoneCta: true,
         formId: "@form:franchise-enquiry",
@@ -125,7 +124,7 @@ function landingSections(market: "tamilnadu" | "north"): Section[] {
     { type: "checklist", content: { eyebrow: "What we are looking for", heading: "From franchise partners", items: PARTNERS } },
     { type: "investment", key: "investment", content: { heading: "Investment breakup", modelId: `@model:${market}` } },
     { type: "roiCalculator", key: "roi", content: roi(tn), settings: { anchorId: "roi-calculator" } },
-    { type: "menuCard", key: "menu-card", content: { heading: "Menu card", image: `@media:menu-card-${tn ? "south" : "north"}`, menuId: "@menu:wecrunch" } },
+    { type: "menuCard", key: "menu-card", content: { heading: "Menu card", image: `@media:menu-card-${tn ? "south" : "north"}`, menuId: "@menu:wecrunch", ...MENU_PANEL } },
     { type: "testimonials", content: { eyebrow: "Real stories. Real success.", heading: "The We Crunch way", source: "all" }, settings: { anchorId: "testimonials" } },
     {
       type: "videos",
@@ -142,32 +141,39 @@ function landingSections(market: "tamilnadu" | "north"): Section[] {
 
 type MenuSeed = { name: string; slug: string; description?: string; categories: { name: string; items: [string, number, string?][] }[] };
 
-// The South and North menu cards list the same items and prices.
+// Transcribed from "WE CRUNCH NEW MENU SEPT" (one card for all states), in the
+// card's reading order: down each column, left to right.
 const MENU: MenuSeed = {
   name: "WeCrunch menu",
   slug: "wecrunch",
-  description: "Transcribed from the WeCrunch menu cards (prices in ₹).",
+  description: "Transcribed from the WeCrunch menu card, September 2026 (prices in ₹).",
   categories: [
     { name: "Burgers", items: [["Kiddy Veg Burger", 29], ["Chicken Kiddy Crunchy Burger", 69], ["Veg Burger", 79], ["Chicken Patty Burger", 99], ["Chicken Crunchy Burger", 129], ["Paneer Cheese Burger", 129], ["No Bun Burger", 189], ["Chicken Tower Burger", 199]] },
     { name: "Crunchy Chicken", items: [["Pcs of Choice", 79], ["Hot and Crunchy Chicken 2pc", 159], ["Hot and Crunchy Chicken 4pc", 339], ["Hot and Crunchy Chicken 8pc", 549]] },
-    { name: "Rice Bowl Varieties (Non-Veg)", items: [["Rice Bowl with Chicken Popcorn", 149], ["Rice Bowl with Chicken Wings", 198], ["Rice Bowl with Crispy Chicken", 168]] },
-    { name: "Rice Bowl Varieties (Veg)", items: [["Plain Rice Bowl", 99], ["Rice Bowl with Veg Nuggets", 148], ["Rice Bowl with Potato Wedges", 168], ["Rice Bowl with Cheese Corn Nuggets", 188]] },
-    { name: "Snack Non-Veg", items: [["Chicken Nuggets 5pcs", 99], ["Chicken Popcorn 100grm", 99], ["Chicken Strips 3 pcs", 99], ["Chicken Lollipop", 119], ["Hot Wings 4 pcs", 119], ["BBQ Wings 4 pcs", 129]] },
+    {
+      name: "Overloaded Fries",
+      items: [
+        ["Overloaded Cheesy Fries", 129], ["Overloaded Cheesy Nachos", 129], ["Overloaded Cheesy Veg Fries", 149], ["Overloaded Cheesy Veg Nachos", 149],
+        ["Overloaded Cheesy Paneer Fries", 169], ["Overloaded Cheesy Paneer Nachos", 169], ["Overloaded Cheesy Popcorn Chicken Fries", 189], ["Overloaded Cheesy Popcorn Chicken Nachos", 189],
+      ],
+    },
+    { name: "Snack N-Veg", items: [["Chicken Nuggets 5pcs", 99], ["Chicken Popcorn 100grm", 99], ["Chicken Strips 3 pcs", 99], ["Chicken Lollipop", 119], ["Hot Wings 4 pcs", 119], ["BBQ Wings 4 pcs", 129]] },
     { name: "Snack Veg", items: [["Veg Nuggets 5 pcs", 59], ["French Fries", 69], ["Smiley 5 pcs", 69], ["Potato Wedges 100gms", 79], ["Cheese Corn Nuggets", 99]] },
     { name: "Mojitos", items: [["Blue Mojito", 75], ["Strawberry Mojito", 75], ["Mango Mojito", 75], ["Blueberry Mojito", 75], ["Mint Mojito", 75], ["Pineapple Mojito", 75]] },
-    { name: "Family Feast", items: [["Family Feast 1", 899, "4 Chicken Crunchy Burger + 4pcs Crunchy Chicken + 2 Fries + 4 Pepsi"], ["Family Feast 2", 999, "8 pcs Crunchy Chicken Tub + 8pcs Lollipop + 2 Fries + 4 Pepsi"]] },
+    { name: "Family Feast 1", items: [["4 Chicken Crunchy Burger + 4pcs Crunchy Chicken + 2 Fries + 4 Soft Drinks", 899]] },
+    { name: "Family Feast 2", items: [["8 pcs Crunchy Chicken Tub + 8pcs Lollipop + 2 Fries + 4 Soft Drinks", 999]] },
     { name: "Wraps", items: [["Veg Wrap", 89], ["Chicken Wrap", 99], ["Periperi Chicken Wrap", 99], ["BBQ Chicken Wrap", 99], ["Paneer Cheese Wrap", 159]] },
-    { name: "Non Veg Burger Combo", items: [["Chicken Patty Burger + Fries + Pepsi", 159], ["Chicken Crunchy Burger + Fries + Pepsi", 199], ["Chicken Tower Burger + Fries + Pepsi", 249]] },
+    { name: "Non Veg Burger Combo", items: [["Chicken Patty Burger + Fries + Soft Drink", 159], ["Chicken Crunchy Burger + Fries + Soft Drink", 199], ["Chicken Tower Burger + Fries + Soft Drink", 249]] },
     {
       name: "Combos",
       items: [
-        ["Snack Platter Non Veg", 349, "4pcs Lollipop + 4 pcs Hot Wings + 4pcs Chicken Nuggets + 2 Pepsi"],
-        ["Snack Platter Veg", 249, "Smileys + Potato Wedges + Cheese Corn Nuggets + 2 Pepsi"],
-        ["Just for 2 Non Veg", 499, "2 Chicken Crunchy Burger + 2pcs Crunchy Chicken + Fries + 2 Pepsi"],
-        ["Just for 2 Veg", 279, "2 Veg Burger + Smileys + Veg Nuggets + 2 Pepsi"],
+        ["Snack Platter Non Veg", 349, "4pcs Lollipop + 4 pcs Hot Wings + 4pcs Chicken Nuggets + 2 Soft Drinks"],
+        ["Snack Platter Veg", 249, "Smileys + Potato Wedges + Cheese Corn Nuggets + 2 Soft Drinks"],
+        ["Just for 2 Non Veg", 499, "2 Chicken Crunchy Burger + 2pcs Crunchy Chicken + Fries + 2 Soft Drinks"],
+        ["Just for 2 Veg", 279, "2 Veg Burger + Smileys + Veg Nuggets + 2 Soft Drinks"],
       ],
     },
-    { name: "Veg Burger Combo", items: [["Classic Veg Burger + Fries + Pepsi", 139], ["Paneer Cheese Burger + Fries + Pepsi", 159]] },
+    { name: "Veg Burger Combo", items: [["Classic Veg Burger + Fries + Soft Drink", 139], ["Paneer Cheese Burger + Fries + Soft Drink", 159]] },
     { name: "Shakes", items: [["Milkshake Vanilla", 99], ["Milkshake Strawberry", 99], ["Milkshake Chocolate", 99], ["Milkshake Oreo", 99], ["Milkshake Pista", 99]] },
     {
       name: "Nashville Sauce Varieties",
@@ -181,6 +187,8 @@ const MENU: MenuSeed = {
     { name: "Soft Drinks", items: [["Soft Drink", 25]] },
   ],
 };
+
+const MENU_PANEL = { panelTitle: "480+ Outlets", panelSubtitle: "All over India", panelNote: "For franchise:" };
 
 const t = (name: string, location: string | null, quote: string) => ({ name, location, quote, rating: 5, tag: null });
 

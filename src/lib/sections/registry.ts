@@ -165,18 +165,18 @@ export const SECTION_TYPES = {
       ...heading,
       { name: "intro", label: "Intro", type: "textarea" },
       { name: "investment", label: "Total investment (₹)", type: "number", min: 0, help: "Used for the payback period" },
-      { name: "dailySales", label: "Default sale per day (₹)", type: "number", min: 0 },
       { name: "daysPerMonth", label: "Trading days per month", type: "number", min: 1, max: 31 },
-      { name: "scenarios", label: "Sales scenarios", type: "list", itemLabel: "label", max: 4, fields: [
-        { name: "label", label: "Name", type: "text", required: true },
-        { name: "dailySales", label: "Sale per day (₹)", type: "number", min: 0 },
+      { name: "defaultScenario", label: "Scenario the calculator starts on", type: "number", min: 1, max: 4, help: "1 = first scenario" },
+      { name: "scenarios", label: "Projections / scenarios", type: "list", itemLabel: "label", max: 4, fields: [
+        { name: "label", label: "Name", type: "text", required: true, help: "e.g. Projection 1" },
+        { name: "subtitle", label: "Format / size", type: "text", help: "e.g. Take Away (100-120 sqft)" },
+        { name: "dailySales", label: "Expected sales per day (₹)", type: "number", min: 0 },
+        { name: "salary", label: "Staff salary per month (₹)", type: "number", min: 0 },
+        { name: "rent", label: "Rent per month (₹)", type: "number", min: 0 },
+        { name: "electricity", label: "Electricity bill per month (₹)", type: "number", min: 0 },
+        { name: "royalty", label: "Royalty per month (₹)", type: "number", min: 0, help: "0 shows as Nil" },
       ] },
-      { name: "fixedCosts", label: "Fixed monthly costs", type: "list", itemLabel: "label", fields: [
-        { name: "label", label: "Name", type: "text", required: true },
-        { name: "amount", label: "Per month (₹)", type: "number", min: 0 },
-        { name: "note", label: "Note", type: "text" },
-      ] },
-      { name: "variableCosts", label: "Running costs (% of sales)", type: "list", itemLabel: "label", fields: [
+      { name: "variableCosts", label: "Costs as % of sales (e.g. food cost)", type: "list", itemLabel: "label", fields: [
         { name: "label", label: "Name", type: "text", required: true },
         { name: "percent", label: "% of sales", type: "number", min: 0, max: 100 },
         { name: "note", label: "Note", type: "text" },
@@ -186,11 +186,14 @@ export const SECTION_TYPES = {
   },
   menuCard: {
     label: "Menu card",
-    description: "Printed menu image, optionally with a searchable text menu.",
+    description: "The menu in the printed card style, with a link to the menu card image.",
     fields: [
       ...heading,
       { name: "image", label: "Menu card image", type: "image" },
-      { name: "menuId", label: "Text menu (accessible)", type: "ref", ref: "menu" },
+      { name: "menuId", label: "Menu", type: "ref", ref: "menu" },
+      { name: "panelTitle", label: "Brand panel line 1", type: "text", help: "e.g. 480+ Outlets" },
+      { name: "panelSubtitle", label: "Brand panel line 2", type: "text", help: "e.g. All over India" },
+      { name: "panelNote", label: "Brand panel note", type: "text", help: "Shown above the phone numbers, e.g. For franchise:" },
     ],
   },
   menuShowcase: {

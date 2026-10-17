@@ -15,6 +15,12 @@ type StateOption = { slug: string; name: string; status: string };
 const input =
   "block min-h-12 w-full rounded-control border-2 border-crust bg-batter px-3.5 py-2.5 text-base text-crust placeholder:text-crust-soft/70 focus:bg-white focus:outline-none focus-visible:outline-3 focus-visible:outline-ketchup";
 
+// Country codes for the mobile field. India first; the server validates the full number.
+const DIAL_CODES = [
+  ["IN", "+91"], ["LK", "+94"], ["AE", "+971"], ["SA", "+966"], ["QA", "+974"], ["OM", "+968"], ["KW", "+965"], ["BH", "+973"],
+  ["SG", "+65"], ["MY", "+60"], ["NP", "+977"], ["BD", "+880"], ["GB", "+44"], ["US", "+1"], ["AU", "+61"],
+] as const;
+
 export function EnquiryForm({
   form,
   states,
@@ -64,7 +70,8 @@ export function EnquiryForm({
           formId: form.id,
           fullName: fd.get("fullName"),
           email: fd.get("email"),
-          phone: fd.get("phone"),
+          // A number typed with its own "+code" wins over the picker.
+          phone: String(fd.get("phone") ?? "").trim().startsWith("+") ? fd.get("phone") : `${fd.get("dialCode") ?? "+91"} ${fd.get("phone") ?? ""}`,
           stateSlug: fd.get("stateSlug") ?? defaultState ?? "",
           city: fd.get("city") ?? "",
           message: fd.get("message") ?? "",
@@ -103,14 +110,14 @@ export function EnquiryForm({
     required,
   });
   const label = (htmlFor: string, text: string, required = true) => (
-    <label htmlFor={htmlFor} className={`field-label block font-semibold ${compact ? "mb-1 text-sm" : "mb-1.5"}`}>
+    <label htmlFor={htmlFor} className={`field-label block font-semibold ${compact ? "mb-1 text-[0.95rem] short:mb-0.5 short:leading-tight" : "mb-1.5"}`}>
       {text}
       {required && <span aria-hidden="true"> *</span>}
     </label>
   );
 
-  const field = compact ? input.replace("min-h-12", "min-h-10").replace("py-2.5", "py-1.5") : input;
-  const wrapper = variant === "card" ? `form-card box ${compact ? "p-5" : "p-6 sm:p-8"}` : "form-card";
+  const field = compact ? input.replace("min-h-12", "min-h-11 short:min-h-10").replace("py-2.5", "py-2 short:py-1.5") : input;
+  const wrapper = variant === "card" ? `form-card box ${compact ? "p-5 sm:p-6 short:py-4" : "p-6 sm:p-8"}` : "form-card";
 
   if (status === "done") {
     return (
@@ -126,11 +133,11 @@ export function EnquiryForm({
 
   return (
     <form ref={ref} onSubmit={onSubmit} noValidate className={wrapper} aria-labelledby={`${id}-title`} data-form-id={form.id}>
-      <h2 id={`${id}-title`} className={`${compact ? "mb-3 text-[1.6rem]" : "mb-6 text-[2rem]"} font-display font-extrabold leading-tight`}>
+      <h2 id={`${id}-title`} className={`${compact ? "mb-4 text-[1.85rem] short:mb-2 short:text-[1.55rem]" : "mb-6 text-[2rem]"} font-display font-extrabold leading-tight`}>
         {title || form.title}
       </h2>
-      <div className={compact ? "space-y-2.5" : "space-y-4"}>
-        <div className={compact ? "grid items-end gap-x-4 gap-y-2.5 sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2" : "space-y-4"}>
+      <div className={compact ? "space-y-2.5 short:space-y-2" : "space-y-4"}>
+        <div className={compact ? "grid items-end gap-x-4 gap-y-2.5 short:gap-y-2 sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2" : "space-y-4"}>
         <div>
           {label(`${id}-name`, "Name")}
           <input id={`${id}-name`} name="fullName" autoComplete="name" className={field} {...a11y("fullName")} />
@@ -143,7 +150,16 @@ export function EnquiryForm({
         </div>
         <div>
           {label(`${id}-phone`, "Mobile")}
-          <input id={`${id}-phone`} name="phone" type="tel" autoComplete="tel" inputMode="tel" className={field} {...a11y("phone")} />
+          <div className="flex">
+            <select name="dialCode" defaultValue="+91" aria-label="Country code" autoComplete="tel-country-code" className={`${field.replace("w-full", "w-auto").replace("px-3.5", "pl-3 pr-1")} shrink-0 rounded-r-none border-r-0 font-semibold`}>
+              {DIAL_CODES.map(([cc, code]) => (
+                <option key={cc} value={code}>
+                  {cc} {code}
+                </option>
+              ))}
+            </select>
+            <input id={`${id}-phone`} name="phone" type="tel" autoComplete="tel-national" inputMode="tel" placeholder="98765 43210" className={`${field} min-w-0 rounded-l-none pl-3`} {...a11y("phone")} />
+          </div>
           {err("phone")}
         </div>
         {form.showState && !(compact && defaultState) && (
@@ -229,7 +245,7 @@ export function EnquiryForm({
 
         {(form.requireConsent || form.consentText) && (
           <div>
-            <label className={`flex items-start gap-3 leading-snug text-crust-soft ${compact ? "text-xs" : "text-[0.95rem]"}`}>
+            <label className={`flex items-start gap-3 leading-snug text-crust-soft ${compact ? "text-sm" : "text-[0.95rem]"}`}>
               <input type="checkbox" name="consent" className="mt-1 size-[1.1rem] shrink-0 accent-[#d7261e]" {...a11y("consent", form.requireConsent)} />
               <span>
                 {form.consentText}{" "}
@@ -265,7 +281,7 @@ export function EnquiryForm({
           <button
             type="submit"
             disabled={status === "sending"}
-            className={`btn-submit inline-flex w-full items-center justify-center rounded-control px-8 font-bold transition disabled:opacity-60 ${compact ? "min-h-11 py-2 text-base" : "min-h-13 py-3 text-lg"}`}
+            className={`btn-submit inline-flex w-full items-center justify-center rounded-control px-8 font-bold transition disabled:opacity-60 ${compact ? "min-h-12 py-2.5 text-lg short:min-h-11 short:py-2" : "min-h-13 py-3 text-lg"}`}
           >
             {status === "sending" ? "Sending…" : form.submitLabel}
           </button>

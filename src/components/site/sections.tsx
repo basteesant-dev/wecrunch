@@ -1,4 +1,5 @@
 import { Check, Drumstick, FileImage, Mail, MapPin, Phone, Star } from "lucide-react";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import type { PublicState, RefData } from "@/lib/content";
 import { displayPhone, telHref } from "@/lib/phone";
@@ -6,6 +7,7 @@ import type { Contact, SnapshotSection } from "@/lib/resolve";
 import type { SiteSettings } from "@/lib/settings-fields";
 import { Counter } from "./Counter";
 import { EnquiryForm } from "./EnquiryForm";
+import { HeroParallax } from "./HeroParallax";
 import { RoiCalculator } from "./RoiCalculator";
 import { Icon } from "./Icon";
 import { Scroller } from "./Scroller";
@@ -61,24 +63,66 @@ function CallButton({ phone, tone = "ketchup" }: { phone: string; tone?: "ketchu
 
 // ---------------------------------------------------------------- hero
 
+// Investment as a rotating seal: "3.80L" large, "+ GST" small, with the
+// takeaway-box hard shadow. Reads "₹3.80 Lakhs + GST" text from the CMS.
+function PriceSeal({ text }: { text: string }) {
+  const m = /([\d.,]+)\s*(?:L|Lakhs?|Lacs?)\b\s*(.*)$/i.exec(text);
+  const points = Array.from({ length: 40 }, (_, i) => {
+    const a = (i / 40) * Math.PI * 2;
+    const r = i % 2 ? 45 : 50;
+    return `${(50 + r * Math.cos(a)).toFixed(2)},${(50 + r * Math.sin(a)).toFixed(2)}`;
+  }).join(" ");
+  return (
+    <div className="relative grid size-36 shrink-0 place-items-center sm:size-40 short:size-32" role="img" aria-label={`Investment ${text}`}>
+      <svg viewBox="0 0 100 100" aria-hidden="true" className="seal-spin absolute inset-0 size-full drop-shadow-[4px_4px_0_var(--color-crust)]">
+        <polygon points={points} fill="var(--color-ketchup)" stroke="var(--color-crust)" strokeWidth="2" strokeLinejoin="round" />
+        <circle cx="50" cy="50" r="38" fill="none" stroke="var(--color-yolk)" strokeWidth="1" strokeDasharray="2.2 2.4" />
+      </svg>
+      <div className="relative text-center leading-none text-white" aria-hidden="true">
+        <p className="font-display text-[0.62rem] font-extrabold uppercase tracking-[0.2em] text-yolk sm:text-[0.7rem]">Investment</p>
+        {m ? (
+          <>
+            <p className="mt-1.5 font-display text-[2.35rem] font-extrabold tracking-tight sm:text-[2.6rem] short:text-[2.2rem]">
+              {m[1]}
+              <span className="text-[0.8em]">L</span>
+            </p>
+            {m[2] && <p className="mt-1 font-display text-[0.8rem] font-bold uppercase tracking-wider sm:text-sm">{m[2]}</p>}
+          </>
+        ) : (
+          <p className="mt-1.5 px-3 font-display text-base font-extrabold">{text}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Hero({ c, s, ctx }: Props) {
   const photo = ctx.data.media[c.background];
   const hasForm = s.variant !== "centered" && !!ctx.data.forms[c.formId];
   return (
-    <section id={s.anchorId || undefined} className="relative isolate overflow-hidden bg-yolk pb-16 text-crust">
-      <div aria-hidden="true" className="blend-bottom pointer-events-none absolute inset-x-0 bottom-0 -z-10" />
+    <section id={s.anchorId || undefined} className="hero relative isolate overflow-hidden bg-yolk pb-16 text-crust">
+      <HeroParallax />
       {hasForm && photo && (
-        <div className="absolute inset-0 -z-10">
-          <MediaImage media={photo} fill priority sizes="100vw" alt="" className="object-cover" />
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="hero-photo absolute inset-0">
+            <MediaImage media={photo} fill priority sizes="100vw" alt="" className="object-cover" />
+          </div>
           <div className="absolute inset-0 bg-gradient-to-b from-yolk via-yolk/95 to-yolk/80 lg:bg-gradient-to-r lg:from-yolk lg:via-yolk/[0.94] lg:to-yolk/30" />
         </div>
       )}
+      {/* After the photo so it paints over it. */}
+      <div aria-hidden="true" className="blend-bottom pointer-events-none absolute inset-x-0 bottom-0 -z-10" />
       <Container
-        className={`grid gap-12 pt-12 md:pt-16 ${hasForm ? "lg:min-h-[calc(100svh-6rem-3px)] lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-14 lg:pt-6" : ""}`}
+        className={`grid gap-12 pt-12 md:pt-16 ${hasForm ? "lg:min-h-[calc(100svh-6rem-3px)] lg:grid-cols-[1fr_34rem] lg:items-center lg:gap-14 lg:pt-6" : ""}`}
       >
-        <div className="@container relative">
+        <div className="@container hero-copy relative">
+          {c.backdropText && (
+            <p className="mb-3 font-display text-[clamp(0.72rem,0.45rem+0.7vw,0.95rem)] font-extrabold uppercase tracking-[0.08em] lg:whitespace-nowrap">
+              {c.backdropText.split(/(?<=[.!?])\s+/).join(" ")}
+            </p>
+          )}
           {c.tagline && (
-            <p className="sticker absolute right-0 top-14 z-10 size-28 rotate-[-10deg] sm:-top-4 bg-ketchup p-3 text-[0.95rem] text-white shadow-box-sm sm:size-32 sm:text-base lg:-right-4">
+            <p className="sticker absolute right-0 top-[6.5rem] z-10 size-28 rotate-[-10deg] sm:top-8 bg-ketchup p-3 text-[0.95rem] text-white shadow-box-sm sm:size-32 sm:text-base lg:-right-4">
               {c.tagline}
             </p>
           )}
@@ -86,24 +130,17 @@ function Hero({ c, s, ctx }: Props) {
           <h1 className={`mt-5 max-w-[13ch] pr-28 text-mega ${hasForm ? "lg:max-w-[15ch] lg:text-[clamp(2.6rem,0.8rem+3.6vw,4.6rem)] short:mt-3 short:text-[3.1rem]!" : ""}`}>
             <Highlighted text={c.heading} highlight={c.highlight} />
           </h1>
-          {c.priceTag && <p className="mt-5 inline-block rounded-xl bg-white px-4 py-2 font-display text-3xl font-extrabold box-flat">{c.priceTag}</p>}
-          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4 short:mt-5">
-            {c.showPhoneCta && <CallButton phone={ctx.contact.phone} />}
-            {hasForm && (
-              <a href="#enquiry" className="font-bold underline decoration-3 underline-offset-4 lg:hidden">
-                Send an enquiry
-              </a>
-            )}
+          <div className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-5 short:mt-4">
+            {c.priceTag && <PriceSeal text={c.priceTag} />}
+            <div className="flex flex-col items-start gap-3">
+              {c.showPhoneCta && <CallButton phone={ctx.contact.phone} />}
+              {hasForm && (
+                <a href="#enquiry" className="font-bold underline decoration-3 underline-offset-4 lg:hidden">
+                  Send an enquiry
+                </a>
+              )}
+            </div>
           </div>
-          {c.backdropText && (
-            <p className="mt-10 select-none font-display font-extrabold uppercase leading-[0.92] tracking-tight text-transparent [-webkit-text-stroke:2px_rgb(58_35_18/0.6)] [font-size:max(6.6cqw,1.9rem)] short:mt-5 short:[font-size:5.2cqw]">
-              {c.backdropText.split(/(?<=[.!?])\s+/).map((line: string, i: number) => (
-                <span key={i} className="block">
-                  {line}
-                </span>
-              ))}
-            </p>
-          )}
           {!hasForm && photo && (
             <div className="box relative mt-10 aspect-[16/9] rotate-[1.2deg] overflow-hidden bg-crust">
               <MediaImage media={photo} fill priority sizes="(min-width: 1024px) 640px, 100vw" alt="" className="object-cover" />
@@ -112,7 +149,7 @@ function Hero({ c, s, ctx }: Props) {
         </div>
         {hasForm && (
           // Bounded to the viewport (scrolls inside on short screens); padding keeps the hard shadow visible.
-          <div id="enquiry" className="w-full max-w-lg justify-self-center overscroll-contain pb-2 pr-2 lg:max-h-[calc(100svh-8rem)] lg:justify-self-end lg:overflow-y-auto">
+          <div id="enquiry" className="hero-form w-full max-w-xl justify-self-center overscroll-contain pb-2 pr-2 lg:max-h-[calc(100svh-8rem)] lg:justify-self-end lg:overflow-y-auto">
             <Form formId={c.formId} ctx={ctx} title={c.formTitle} compact />
           </div>
         )}
@@ -368,41 +405,95 @@ function Roi({ c, s }: Props) {
 
 // ---------------------------------------------------------------- menu
 
+// Category photos from the printed menu card, matched by category name (first
+// match wins), so a category added in the CMS simply shows without one.
+const MENU_PHOTOS: [RegExp, string, number, number][] = [
+  [/veg burger combo/i, "veg-combo", 420, 414],
+  [/burger combo|family feast 1/i, "feast", 420, 257],
+  [/family feast/i, "platter", 420, 190],
+  [/combo/i, "combos", 420, 196],
+  [/nashville/i, "nashville", 420, 329],
+  [/burger/i, "burger", 420, 385],
+  [/crunchy chicken/i, "crunchy-chicken", 420, 263],
+  [/n-?veg|non.?veg/i, "snack-nonveg", 420, 227],
+  [/snack veg/i, "fries", 229, 534],
+  [/mojito/i, "mojito", 290, 518],
+  [/wrap/i, "wrap", 420, 367],
+  [/shake/i, "shakes", 330, 439],
+  [/dessert/i, "dessert", 191, 115],
+];
+
 function MenuCard({ c, s, ctx }: Props) {
   const img = ctx.data.media[c.image];
   const menu = ctx.data.menus[c.menuId];
+  const phones = [ctx.settings.phone, ctx.settings.phoneSecondary].filter(Boolean);
   return (
-    <Section settings={s} tone="white">
+    <Section settings={s} tone="yolk" className="menu-board">
       <Container>
         <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
-          <div className="-mb-10">
+          <div className="-mb-12">
             <SectionHeading heading={c.heading} highlight={c.highlight} />
           </div>
           {img && menu && (
-            <a href={img.url} target="_blank" rel="noopener" className="box-flat inline-flex min-h-11 items-center gap-2.5 bg-yolk px-4 font-bold hover:bg-[#ffe14d]">
+            <a href={img.url} target="_blank" rel="noopener" className="box-flat inline-flex min-h-11 items-center gap-2.5 bg-white px-4 font-bold hover:bg-batter">
               <FileImage className="size-5" aria-hidden="true" />
               View the printed menu card
             </a>
           )}
         </div>
         {menu ? (
-          <div className="mt-12 columns-1 gap-5 sm:columns-2 lg:columns-3">
-            {menu.categories.map((cat) => (
-              <div key={cat.name} className="box-flat mb-5 break-inside-avoid bg-batter p-5">
-                <h3 className="mb-3 text-2xl">{cat.name}</h3>
-                <ul className="space-y-2">
-                  {cat.items.map((it) => (
-                    <li key={it.name} className="flex items-start justify-between gap-3">
-                      <span>
-                        <span className="font-semibold">{it.name}</span>
-                        {it.description && <span className="block text-sm text-crust-soft">{it.description}</span>}
-                      </span>
-                      {it.price && <span className="shrink-0 rounded-full bg-crust px-2.5 py-0.5 text-sm font-bold tabular-nums text-yolk">₹{Number(it.price).toFixed(0)}</span>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          <div className="menu-type mt-14 columns-1 gap-10 sm:columns-2 lg:columns-3 xl:columns-4">
+            {menu.categories.map((cat) => {
+              const photo = MENU_PHOTOS.find(([re]) => re.test(cat.name));
+              return (
+                <div key={cat.name} className="mb-10 break-inside-avoid">
+                  <div className="flex min-h-20 items-center justify-between gap-2">
+                    <h3 className="menu-brush text-[clamp(1.25rem,1.1rem+0.4vw,1.5rem)] text-balance">{cat.name}</h3>
+                    {photo && (
+                      <Image
+                        src={`/menu/${photo[1]}.webp`}
+                        alt=""
+                        width={photo[2]}
+                        height={photo[3]}
+                        sizes="160px"
+                        className="-my-2 h-24 w-auto max-w-[38%] shrink-0 object-contain drop-shadow-[0_6px_6px_rgb(0_0_0/0.25)]"
+                      />
+                    )}
+                  </div>
+                  <ul className="mt-3 space-y-1.5">
+                    {cat.items.map((it) => (
+                      <li key={it.name} className="flex items-baseline justify-between gap-4 uppercase leading-snug">
+                        <span className="min-w-0">
+                          <span className={it.description ? "font-semibold" : ""}>{it.name}</span>
+                          {it.description && <span className="mt-0.5 block text-[0.85em]">{it.description}</span>}
+                        </span>
+                        {it.price && (
+                          <span className="shrink-0 tabular-nums">
+                            <span className="sr-only">₹</span>
+                            {Number(it.price).toFixed(0)}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+            <div className="menu-splash break-inside-avoid px-10 py-14 text-center text-white">
+              <Image src="/menu/logo.webp" alt={ctx.settings.siteName} width={600} height={312} sizes="220px" className="mx-auto h-auto w-[13.5rem]" />
+              {(c.panelTitle || c.panelSubtitle) && (
+                <p className="mt-2 font-[family-name:var(--font-league-spartan)] text-[1.7rem] font-extrabold uppercase leading-[1.05] text-yolk">
+                  {c.panelTitle}
+                  {c.panelSubtitle && <span className="block">{c.panelSubtitle}</span>}
+                </p>
+              )}
+              {c.panelNote && <p className="mt-4 uppercase">{c.panelNote}</p>}
+              {phones.map((p) => (
+                <a key={p} href={telHref(p)} className="block font-semibold tabular-nums hover:text-yolk">
+                  {displayPhone(p)}
+                </a>
+              ))}
+            </div>
           </div>
         ) : (
           img && <MediaImage media={img} sizes="(min-width: 1216px) 1152px, 100vw" className="box mt-10 w-full" />
@@ -624,11 +715,11 @@ function StateSelector({ c, ctx }: Props) {
   return (
     <section className="relative isolate overflow-hidden bg-yolk pb-16 text-crust">
       <div aria-hidden="true" className="blend-bottom pointer-events-none absolute inset-x-0 bottom-0 -z-10" />
-      <Container className="grid min-h-[calc(100svh-6rem)] items-center gap-12 pt-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
-        <form action="/api/state" method="get" className="max-w-xl">
-          {c.heading && <h1 className="text-mega">{c.heading}</h1>}
+      <Container className="grid min-h-[calc(100svh-6rem)] grid-cols-1 items-center gap-12 pt-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+        <form action="/api/state" method="get" className="w-full min-w-0 max-w-xl">
+          {c.heading && <h1 className="text-mega [overflow-wrap:anywhere]">{c.heading}</h1>}
           {c.description && <p className="mt-5 text-xl font-medium">{c.description}</p>}
-          <div className="box mt-10 bg-white p-5">
+          <div className="box mt-10 bg-white p-4 sm:p-5">
             <label htmlFor="state-select" className="block text-lg font-bold">
               {c.label}
             </label>
@@ -638,7 +729,7 @@ function StateSelector({ c, ctx }: Props) {
                 name="state"
                 required
                 defaultValue=""
-                className="min-h-13 flex-1 rounded-control border-3 border-crust bg-batter px-4 text-lg"
+                className="min-h-13 w-full min-w-0 flex-1 rounded-control border-3 border-crust bg-batter px-4 text-lg"
               >
                 <option value="" disabled>
                   {c.placeholder || "- Select -"}

@@ -6,6 +6,7 @@ import { displayPhone, telHref, whatsappHref } from "@/lib/phone";
 import type { Contact } from "@/lib/resolve";
 import type { SiteSettings } from "@/lib/settings-fields";
 import { MobileNav } from "./MobileNav";
+import { ScrollReveal } from "./ScrollReveal";
 import { ContactDetails, MapEmbed } from "./sections";
 import { Container, MediaImage } from "./ui";
 
@@ -137,6 +138,7 @@ export function SiteChrome({
         </Container>
       </header>
 
+      <ScrollReveal />
       <main id="main">{children}</main>
 
       <footer className="on-crust bg-crust text-batter">
