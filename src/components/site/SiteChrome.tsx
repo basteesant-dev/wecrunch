@@ -75,7 +75,7 @@ export function SiteChrome({
         <Container className="relative flex h-24 items-center justify-between gap-6">
           <Link href="/" className="shrink-0" aria-label={`${settings.siteName} — choose your state`}>
             {logo ? (
-              <MediaImage media={logo} alt={settings.logoAlt || settings.siteName} sizes="200px" priority className="h-16 w-auto" />
+              <MediaImage media={logo} alt={settings.logoAlt || settings.siteName} sizes="240px" priority className="h-[5.5rem] w-auto" />
             ) : (
               <span className="font-display text-3xl text-yolk">{settings.siteName}</span>
             )}

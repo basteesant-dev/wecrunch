@@ -154,7 +154,7 @@ export function EnquiryForm({
             <select name="dialCode" defaultValue="+91" aria-label="Country code" autoComplete="tel-country-code" className={`${field.replace("w-full", "w-auto").replace("px-3.5", "pl-3 pr-1")} shrink-0 rounded-r-none border-r-0 font-semibold`}>
               {DIAL_CODES.map(([cc, code]) => (
                 <option key={cc} value={code}>
-                  {cc} {code}
+                  {code}
                 </option>
               ))}
             </select>

@@ -27,7 +27,7 @@ const WHY_CHOOSE = (tn: boolean) => [
   { icon: "Users", text: "No experience staff required" },
   { icon: "UserCog", text: "Staff training at your own location" },
   { icon: "Undo2", text: "Returns from as early as from first month" },
-  { icon: "Wrench", text: "Entire startup operations & setup will be handled by the brand" },
+  { icon: "Wrench", text: "Entire setup will be handled by the brand" },
   ...(tn ? [{ icon: "IndianRupee", text: "No Royalty" }] : []),
   { icon: "Sparkles", text: "Hassle free business to operate." },
 ];
@@ -42,7 +42,7 @@ const PARTNERS = [
 
 // REVIEW: live site reads "at most freshness"; corrected to "utmost freshness".
 const STORY =
-  "<p>Dav &amp; Mel Hospitality, the parent company has We Crunch, it brings the finest flavors of crunchy chicken with utmost freshness to it. Crunchy chicken, burgers, wraps, Brownies, rice Bowl, fries and much more, we have them all covered in our menu.</p>";
+  "<p>Dav &amp; Mel Hospitality, the parent company has We Crunch, it brings the finest flavors of crunchy chicken with utmost freshness to it. Crunchy chicken, burgers, wraps, Brownies, overloaded fries and much more, we have them all covered in our menu.</p>";
 
 // Product photos have no captions on the live site; names come from the menu card. REVIEW
 const PRODUCTS: [string, string][] = [
@@ -57,30 +57,25 @@ const PRODUCTS: [string, string][] = [
   ["product-9", "Milkshake Oreo"],
 ];
 
-// REVIEW: illustrative cost model, chosen to agree with the "more than 40%" margin
-// and "6 to 8 months" payback claims. Replace with figures from the franchise team.
+// Three outlet formats from the "WE CRUNCH BROCHURE SEPT" sales & revenue forecast.
+// The brochure lists no royalty; North keeps its 5000/- a month (7th month onwards).
 const roi = (tn: boolean) => {
-  const fixed = { salary: 20000, rent: 12000, electricity: 0, royalty: tn ? 0 : 5000 };
+  const royalty = tn ? 0 : 5000;
   return {
   eyebrow: "Sales & revenue forecast",
   heading: "Calculate your profit from your daily sales",
   highlight: "your profit",
-  intro: "Illustrative monthly performance across three sales scenarios. Pick one to load its numbers into the calculator, then run your own.",
+  intro: "Three outlet formats from our franchise brochure. Pick one to load its numbers into the calculator, then run your own.",
   investment: tn ? 380000 : 379000,
   daysPerMonth: 30,
   defaultScenario: 2,
   scenarios: [
-    { label: "Conservative", subtitle: "", dailySales: 4000, ...fixed },
-    { label: "Realistic", subtitle: "", dailySales: 5500, ...fixed },
-    { label: "Strong", subtitle: "", dailySales: 8000, ...fixed },
+    { label: "Projection 1", subtitle: "Take Away (100-150 sqft)", dailySales: 6000, salary: 24000, rent: 12000, electricity: 9000, royalty },
+    { label: "Projection 2", subtitle: "QSR (200-300 sqft)", dailySales: 10000, salary: 24000, rent: 30000, electricity: 15000, royalty },
+    { label: "Projection 3", subtitle: "Casual Dine In (300-500 sqft)", dailySales: 15000, salary: 36000, rent: 40000, electricity: 22000, royalty },
   ],
-  variableCosts: [
-    { label: "Raw materials & packaging", percent: 30, note: "" },
-    { label: "Electricity, gas & miscellaneous", percent: 6, note: "" },
-    { label: "Maintenance", percent: 2, note: "" },
-    { label: "Marketing", percent: 2, note: "" },
-  ],
-  disclaimer: `Figures are illustrative and may vary by location, footfall and operating costs. Investment shown excludes GST${tn ? "" : " and interior"}.${tn ? "" : " Royalty applies from the 7th month."}`,
+  variableCosts: [{ label: "Food cost", percent: 40, note: "" }],
+  disclaimer: `Figures are illustrative and may vary by location, footfall and operating costs. Investment shown excludes GST and interior.${tn ? "" : " Royalty applies from the 7th month."}`,
   };
 };
 
@@ -105,7 +100,7 @@ function landingSections(market: "tamilnadu" | "north"): Section[] {
     },
     { type: "features", content: { heading: "Why choose We Crunch franchise?", items: WHY_CHOOSE(tn) } },
     { type: "about", content: { heading: "Our delicious story", body: STORY, image: `@media:about-${tn ? "tn" : "north"}`, imagePosition: "left" }, settings: { anchorId: "about" } },
-    { type: "marquee", content: { items: ["Low Investment", "High Profit", "Life Time Man Power Support", "100% Ownership", "480+ Outlets"].map((text) => ({ text })) }, settings: { spacing: "none" } },
+    { type: "marquee", content: { items: ["Low Investment", "High Profit", "100% Ownership", "480+ Outlets"].map((text) => ({ text })) }, settings: { spacing: "none" } },
     {
       type: "stats",
       content: {
@@ -114,13 +109,13 @@ function landingSections(market: "tamilnadu" | "north"): Section[] {
           { value: 1, suffix: "+", label: "Countries" },
           { value: 480, suffix: "+", label: "Outlets" },
           { value: 6, suffix: "+", label: "States" },
-          { value: 100000, suffix: "", label: "Happy Customers" },
+          { value: 50, suffix: "L+", label: "Happy Customers" },
         ],
       },
     },
     { type: "franchiseFacts", key: "facts", content: { heading: "Franchise facts", modelId: `@model:${market}`, showRoyalty: true } },
     { type: "gallery", content: { heading: "Gallery", galleryId: "@gallery:outlets" }, settings: { anchorId: "gallery", variant: "portrait" } },
-    { type: "marquee", content: { items: ["Fried Chicken", "Burgers", "French Fries", "Wraps", "Rice Bowl"].map((text) => ({ text })), reverse: true }, settings: { spacing: "none" } },
+    { type: "marquee", content: { items: ["Fried Chicken", "Burgers", "French Fries", "Wraps", "Overloaded Fries"].map((text) => ({ text })), reverse: true }, settings: { spacing: "none" } },
     { type: "checklist", content: { eyebrow: "What we are looking for", heading: "From franchise partners", items: PARTNERS } },
     { type: "investment", key: "investment", content: { heading: "Investment breakup", modelId: `@model:${market}` } },
     { type: "roiCalculator", key: "roi", content: roi(tn), settings: { anchorId: "roi-calculator" } },
@@ -265,17 +260,17 @@ export const seed = {
     {
       name: "Tamil Nadu fried chicken franchise",
       slug: "tamilnadu",
-      totalInvestment: "3.80 Lakhs",
+      totalInvestment: "3.80 Lakhs (Excluding Interior)",
       area: "Approximately 100 to 150 sq.ft required",
       expansion: "Pan India",
       roi: "From 1st month Onwards",
       payback: "6 to 8 Months",
       royalty: "Zero Royalty",
       breakdown: [
-        { label: "Total Investment", value: "Rs 3,80,000/-", icon: "Wallet" },
+        { label: "Total Investment", value: "Rs 3,80,000/-", note: "(Franchise fee + kitchen equipment, excluding interior)", icon: "Wallet" },
         { label: "Franchise Fee", value: "Rs 2,00,000/-", icon: "IndianRupee" },
         { label: "Kitchen Equipment", value: "1,80,000/-", icon: "ShoppingCart" },
-        { label: "Interior", value: "1,75,000/-", note: "(2D will be provided by brand for kitchen Interior.)", icon: "Layers" },
+        { label: "Interior", value: "1,75,000/- onwards", note: "Not included in total investment. Depends on shop size and requirements.", icon: "Layers" },
         { label: "Royalty", value: "Zero Royalty", icon: "Award" },
       ],
     },
@@ -289,10 +284,10 @@ export const seed = {
       payback: "6 to 8 Months",
       royalty: "5000/- Month Only (7th Month Onwards)",
       breakdown: [
-        { label: "Total Investment", value: "Rs 3,79,000/-", note: "(Excluding interior)", icon: "Wallet" },
+        { label: "Total Investment", value: "Rs 3,79,000/-", note: "(Franchise fee + kitchen equipment, excluding interior)", icon: "Wallet" },
         { label: "Franchise Fee", value: "Rs 1,99,000/-", icon: "IndianRupee" },
         { label: "Kitchen Equipment", value: "1,80,000/-", icon: "ShoppingCart" },
-        { label: "Interior", value: "1,75,000/-", note: "(2D will be provided by brand for kitchen Interior.)", icon: "Layers" },
+        { label: "Interior", value: "1,75,000/- onwards", note: "Not included in total investment. Depends on shop size and requirements.", icon: "Layers" },
         { label: "Royalty", value: "5000/- Month Only", note: "(7th Month Onwards)", icon: "Award" },
       ],
     },
@@ -344,7 +339,7 @@ export const seed = {
             label: "States",
             placeholder: "- Select -",
             buttonLabel: "Continue",
-            background: "@media:home-bg",
+            background: "@media:about-north",
           },
           settings: { spacing: "none" },
         },

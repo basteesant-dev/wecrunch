@@ -13,6 +13,7 @@
   --color-crust-soft: #6b4a2e;
   --color-ketchup: #d7261e;
   --color-ketchup-deep: #b51d16;
+  --color-fresh: #1f8a3a;
   --color-batter: #fffbef;
   --color-white: #ffffff;
   --color-danger: #b42318;
@@ -135,8 +136,8 @@ html:not([data-reveal-ready]) [data-reveal] { transition: none; }
 
 /*
  * Menu in the printed card's style: grunge-speckled yellow, category names on
- * black brush strokes in League Spartan, items in uppercase Poppins, and the
- * brand on a black ink splash.
+ * black brush strokes in League Spartan, items in bold uppercase Poppins, and the
+ * brand on a crust card in the last column.
  */
 .menu-board::after {
   content: "";
@@ -148,7 +149,7 @@ html:not([data-reveal-ready]) [data-reveal] { transition: none; }
   opacity: 0.22;
   mask: linear-gradient(transparent, #000 var(--blend-size), #000 calc(100% - var(--blend-size)), transparent);
 }
-.menu-type { font-family: var(--font-poppins), var(--font-body); font-size: 0.98rem; color: #111; }
+.menu-type { font-family: var(--font-poppins), var(--font-body); font-size: 1.1rem; font-weight: 600; color: #111; }
 .menu-brush {
   display: inline-block;
   max-width: 100%;
@@ -161,7 +162,6 @@ html:not([data-reveal-ready]) [data-reveal] { transition: none; }
   letter-spacing: 0;
   text-transform: uppercase;
 }
-.menu-splash { background: url(/menu/splash.svg) center / 100% 100% no-repeat; }
 
 /* Optional highlighted words: a yellow marker box. */
 .hl { background: var(--color-yolk); color: var(--color-crust); padding-inline: 0.12em; box-decoration-break: clone; }

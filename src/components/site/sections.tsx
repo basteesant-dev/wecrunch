@@ -73,20 +73,20 @@ function PriceSeal({ text }: { text: string }) {
     return `${(50 + r * Math.cos(a)).toFixed(2)},${(50 + r * Math.sin(a)).toFixed(2)}`;
   }).join(" ");
   return (
-    <div className="relative grid size-36 shrink-0 place-items-center sm:size-40 short:size-32" role="img" aria-label={`Investment ${text}`}>
+    <div className="relative grid size-44 shrink-0 place-items-center sm:size-52 short:size-40" role="img" aria-label={`Investment ${text}`}>
       <svg viewBox="0 0 100 100" aria-hidden="true" className="seal-spin absolute inset-0 size-full drop-shadow-[4px_4px_0_var(--color-crust)]">
         <polygon points={points} fill="var(--color-ketchup)" stroke="var(--color-crust)" strokeWidth="2" strokeLinejoin="round" />
         <circle cx="50" cy="50" r="38" fill="none" stroke="var(--color-yolk)" strokeWidth="1" strokeDasharray="2.2 2.4" />
       </svg>
       <div className="relative text-center leading-none text-white" aria-hidden="true">
-        <p className="font-display text-[0.62rem] font-extrabold uppercase tracking-[0.2em] text-yolk sm:text-[0.7rem]">Investment</p>
+        <p className="font-display text-[0.72rem] font-extrabold uppercase tracking-[0.14em] text-yolk sm:text-[0.82rem]">Investment</p>
         {m ? (
           <>
-            <p className="mt-1.5 font-display text-[2.35rem] font-extrabold tracking-tight sm:text-[2.6rem] short:text-[2.2rem]">
+            <p className="mt-1.5 font-display text-[3rem] font-extrabold tracking-tight sm:text-[3.5rem] short:text-[2.75rem]">
               {m[1]}
               <span className="text-[0.8em]">L</span>
             </p>
-            {m[2] && <p className="mt-1 font-display text-[0.8rem] font-bold uppercase tracking-wider sm:text-sm">{m[2]}</p>}
+            {m[2] && <p className="mt-1 font-display text-base font-bold uppercase tracking-wider sm:text-lg">{m[2]}</p>}
           </>
         ) : (
           <p className="mt-1.5 px-3 font-display text-base font-extrabold">{text}</p>
@@ -115,19 +115,20 @@ function Hero({ c, s, ctx }: Props) {
       <Container
         className={`grid gap-12 pt-12 md:pt-16 ${hasForm ? "lg:min-h-[calc(100svh-6rem-3px)] lg:grid-cols-[1fr_34rem] lg:items-center lg:gap-14 lg:pt-6" : ""}`}
       >
+        {/* Brand line across the whole hero, one line from laptop width up. */}
+        {c.backdropText && (
+          <p className={`font-display text-[clamp(1.15rem,0.5rem+1.6vw,2.4rem)] font-extrabold uppercase leading-tight tracking-[0.04em] lg:whitespace-nowrap ${hasForm ? "lg:col-span-2 lg:-mb-8 short:-mb-10" : ""}`}>
+            {c.backdropText.split(/(?<=[.!?])\s+/).join(" ")}
+          </p>
+        )}
         <div className="@container hero-copy relative">
-          {c.backdropText && (
-            <p className="mb-3 font-display text-[clamp(0.72rem,0.45rem+0.7vw,0.95rem)] font-extrabold uppercase tracking-[0.08em] lg:whitespace-nowrap">
-              {c.backdropText.split(/(?<=[.!?])\s+/).join(" ")}
-            </p>
-          )}
           {c.tagline && (
-            <p className="sticker absolute right-0 top-[6.5rem] z-10 size-28 rotate-[-10deg] sm:top-8 bg-ketchup p-3 text-[0.95rem] text-white shadow-box-sm sm:size-32 sm:text-base lg:-right-4">
+            <p className="sticker absolute right-0 top-[3.5rem] z-10 size-32 rotate-[-10deg] bg-fresh p-3 text-lg text-white shadow-box-sm sm:top-0 sm:size-40 sm:text-[1.35rem] lg:-right-4 short:size-32 short:text-lg">
               {c.tagline}
             </p>
           )}
           {c.eyebrow && <p className="inline-block rounded-full bg-crust px-4 py-1.5 font-bold text-yolk">{c.eyebrow}</p>}
-          <h1 className={`mt-5 max-w-[13ch] pr-28 text-mega ${hasForm ? "lg:max-w-[15ch] lg:text-[clamp(2.6rem,0.8rem+3.6vw,4.6rem)] short:mt-3 short:text-[3.1rem]!" : ""}`}>
+          <h1 className={`mt-5 max-w-[13ch] pr-32 text-mega sm:pr-40 ${hasForm ? "lg:max-w-[15ch] lg:text-[clamp(2.6rem,0.8rem+3.6vw,4.6rem)] short:mt-3 short:text-[3.1rem]!" : ""}`}>
             <Highlighted text={c.heading} highlight={c.highlight} />
           </h1>
           <div className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-5 short:mt-4">
@@ -288,16 +289,21 @@ function Investment({ c, s, ctx }: Props) {
       <Container>
         <SectionHeading heading={c.heading} highlight={c.highlight} />
         <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {rows.map((b, i) => (
-            <div key={i} className="box-flat flex flex-col bg-white p-5">
-              <dt className="flex items-center gap-2 font-semibold text-crust-soft">
-                <Icon name={b.icon} className="size-5" />
-                {b.label}
-              </dt>
-              <dd className="mt-3 font-display text-2xl font-extrabold leading-tight">{b.value}</dd>
-              {b.note && <dd className="mt-1 text-sm text-crust-soft">{b.note}</dd>}
-            </div>
-          ))}
+          {rows.map((b, i) => {
+            // A cost outside the total (note says "not included") is flagged so nobody adds it in.
+            const extra = /not included/i.test(b.note ?? "");
+            return (
+              <div key={i} className={`box-flat relative flex flex-col p-5 ${extra ? "bg-ketchup text-white" : "bg-white"}`}>
+                {extra && <span className="sticker absolute -top-5 right-4 size-14 rotate-12 bg-yolk text-sm text-crust">Extra</span>}
+                <dt className={`flex items-center gap-2 font-semibold ${extra ? "text-white/90" : "text-crust-soft"}`}>
+                  <Icon name={b.icon} className="size-5" />
+                  {b.label}
+                </dt>
+                <dd className="mt-3 font-display text-2xl font-extrabold leading-tight">{b.value}</dd>
+                {b.note && <dd className={`mt-1 text-sm ${extra ? "font-bold" : "text-crust-soft"}`}>{b.note}</dd>}
+              </div>
+            );
+          })}
           {total && (
             <div className="box relative mt-4 flex flex-wrap items-end justify-between gap-4 bg-yolk p-6 sm:col-span-2 lg:col-span-4">
               <dt className="sticker absolute -top-6 left-5 size-16 -rotate-12 bg-ketchup text-sm text-white">Total</dt>
@@ -442,7 +448,7 @@ function MenuCard({ c, s, ctx }: Props) {
           )}
         </div>
         {menu ? (
-          <div className="menu-type mt-14 columns-1 gap-10 sm:columns-2 lg:columns-3 xl:columns-4">
+          <div className="menu-type mt-14 columns-1 gap-12 sm:columns-2 lg:columns-3">
             {menu.categories.map((cat) => {
               const photo = MENU_PHOTOS.find(([re]) => re.test(cat.name));
               return (
@@ -464,7 +470,7 @@ function MenuCard({ c, s, ctx }: Props) {
                     {cat.items.map((it) => (
                       <li key={it.name} className="flex items-baseline justify-between gap-4 uppercase leading-snug">
                         <span className="min-w-0">
-                          <span className={it.description ? "font-semibold" : ""}>{it.name}</span>
+                          <span className={it.description ? "font-extrabold" : ""}>{it.name}</span>
                           {it.description && <span className="mt-0.5 block text-[0.85em]">{it.description}</span>}
                         </span>
                         {it.price && (
@@ -479,20 +485,23 @@ function MenuCard({ c, s, ctx }: Props) {
                 </div>
               );
             })}
-            <div className="menu-splash break-inside-avoid px-10 py-14 text-center text-white">
+            <div className="box break-inside-avoid bg-crust px-6 py-8 text-center text-white">
               <Image src="/menu/logo.webp" alt={ctx.settings.siteName} width={600} height={312} sizes="220px" className="mx-auto h-auto w-[13.5rem]" />
               {(c.panelTitle || c.panelSubtitle) && (
-                <p className="mt-2 font-[family-name:var(--font-league-spartan)] text-[1.7rem] font-extrabold uppercase leading-[1.05] text-yolk">
+                <p className="mt-3 font-[family-name:var(--font-league-spartan)] text-[1.7rem] font-extrabold uppercase leading-[1.05] text-yolk">
                   {c.panelTitle}
                   {c.panelSubtitle && <span className="block">{c.panelSubtitle}</span>}
                 </p>
               )}
-              {c.panelNote && <p className="mt-4 uppercase">{c.panelNote}</p>}
-              {phones.map((p) => (
-                <a key={p} href={telHref(p)} className="block font-semibold tabular-nums hover:text-yolk">
-                  {displayPhone(p)}
-                </a>
-              ))}
+              {c.panelNote && <p className="mt-5 uppercase tracking-wider">{c.panelNote}</p>}
+              <div className="mt-3 flex flex-col items-center gap-2.5">
+                {phones.map((p) => (
+                  <a key={p} href={telHref(p)} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-yolk px-5 font-bold tabular-nums text-crust hover:bg-white">
+                    <Phone className="size-4" aria-hidden="true" />
+                    {displayPhone(p)}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
