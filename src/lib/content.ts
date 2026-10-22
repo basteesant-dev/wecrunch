@@ -108,11 +108,12 @@ export async function getPublicPaths() {
   cms();
   const [pages, states] = await Promise.all([
     db.page.findMany({ where: { status: "PUBLISHED", noIndex: false }, select: { slug: true, updatedAt: true } }),
-    db.state.findMany({ where: { status: { not: "DRAFT" } }, select: { slug: true, updatedAt: true } }),
+    db.state.findMany({ where: { status: { not: "DRAFT" } }, select: { slug: true, updatedAt: true, landingPage: { select: { updatedAt: true } } } }),
   ]);
   return [
     ...pages.map((p) => ({ path: p.slug === "home" ? "" : p.slug, updatedAt: p.updatedAt })),
-    ...states.map((s) => ({ path: s.slug, updatedAt: s.updatedAt })),
+    // A state page changes when its shared landing page does.
+    ...states.map((s) => ({ path: s.slug, updatedAt: s.landingPage && s.landingPage.updatedAt > s.updatedAt ? s.landingPage.updatedAt : s.updatedAt })),
   ];
 }
 

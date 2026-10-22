@@ -42,17 +42,25 @@ export function SiteChrome({
   // In-page links (#about) only make sense where that section exists.
   const links = nav.filter((n) => !n.href.startsWith("#") || anchors.has(n.href.slice(1)));
   const changeText = settings.chooseStateText || "Change state";
+  const siteUrl = (process.env.SITE_URL || "http://localhost:3000").replace(/\/$/, "");
   const orgJsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    name: settings.siteName,
-    legalName: settings.companyName || undefined,
-    url: process.env.SITE_URL,
-    logo: logo ? new URL(logo.url, process.env.SITE_URL || "http://localhost:3000").toString() : undefined,
-    telephone: settings.phone ? telHref(settings.phone).slice(4) : undefined,
-    email: settings.email || undefined,
-    address: settings.address ? { "@type": "PostalAddress", streetAddress: settings.address.replace(/\n/g, " "), addressCountry: "IN" } : undefined,
-    sameAs: settings.socials.map((s) => s.url),
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${siteUrl}/#organization`,
+        name: settings.siteName,
+        legalName: settings.companyName || undefined,
+        url: siteUrl,
+        logo: logo ? new URL(logo.url, siteUrl).toString() : undefined,
+        telephone: settings.phone ? telHref(settings.phone).slice(4) : undefined,
+        email: settings.email || undefined,
+        address: settings.address ? { "@type": "PostalAddress", streetAddress: settings.address.replace(/\n/g, " "), addressCountry: "IN" } : undefined,
+        sameAs: settings.socials.map((s) => s.url),
+      },
+      // Lets Google show the brand as the site name in results.
+      { "@type": "WebSite", "@id": `${siteUrl}/#website`, name: settings.siteName, url: siteUrl, inLanguage: "en-IN", publisher: { "@id": `${siteUrl}/#organization` } },
+    ],
   };
 
   return (

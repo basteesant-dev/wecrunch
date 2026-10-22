@@ -57,6 +57,11 @@ const PRODUCTS: [string, string][] = [
   ["product-9", "Milkshake Oreo"],
 ];
 
+// "{state}" becomes the state's name on every state URL that renders the page.
+const STATE_SEO_TITLE = "WeCrunch Fried Chicken Franchise in {state}";
+const STATE_SEO_DESCRIPTION =
+  "Start a WeCrunch fried chicken franchise in {state}. No frozen, only fresh chicken, investment under ₹4 Lakhs + GST and the entire setup handled by the brand.";
+
 // Three outlet formats from the "WE CRUNCH BROCHURE SEPT" sales & revenue forecast.
 // The brochure lists no royalty; North keeps its 5000/- a month (7th month onwards).
 const roi = (tn: boolean) => {
@@ -219,7 +224,7 @@ export const seed = {
     mapQuery: "First Floor, 36/37, Redhills High Road, Samdaria Colony, Kolathur, Chennai, Tamil Nadu 600099",
     titleTemplate: "%s - WeCrunch",
     defaultSeoTitle: "WeCrunch Fried Chicken Franchise",
-    defaultSeoDescription: "Profit Margin, More Than 40%",
+    defaultSeoDescription: "Start a WeCrunch fried chicken franchise. No frozen, only fresh chicken, investment under ₹4 Lakhs + GST, and the entire setup handled by the brand.",
     ogImage: "@media:hero-bg",
     defaultFormId: "@form:franchise-enquiry",
     notifyEmails: "",
@@ -328,7 +333,7 @@ export const seed = {
       slug: "home",
       title: "Home",
       seoTitle: "WeCrunch Fried Chicken Franchise",
-      seoDescription: "No frozen, only fresh chicken. Choose your state to explore the WeCrunch franchise opportunity.",
+      seoDescription: "WeCrunch fried chicken franchise: no frozen, only fresh chicken. Investment under ₹4 Lakhs + GST. Choose your state to see the franchise details.",
       phone: null,
       sections: [
         {
@@ -345,8 +350,8 @@ export const seed = {
         },
       ] as Section[],
     },
-    { slug: "tamilnadu", title: "Tamilnadu", seoTitle: null, seoDescription: "Profit Margin, More Than 40%. Start your own high profitable fried chicken franchise in Tamil Nadu.", phone: "+91 7418306999", sections: landingSections("tamilnadu") },
-    { slug: "north", title: "North WeCrunch Franchise", seoTitle: null, seoDescription: "Profit Margin, More Than 40%. Start your own high profitable fried chicken franchise.", phone: "+91 8754404554", sections: landingSections("north") },
+    { slug: "tamilnadu", title: "Tamilnadu", seoTitle: STATE_SEO_TITLE, seoDescription: STATE_SEO_DESCRIPTION, phone: "+91 7418306999", sections: landingSections("tamilnadu") },
+    { slug: "north", title: "North WeCrunch Franchise", seoTitle: STATE_SEO_TITLE, seoDescription: STATE_SEO_DESCRIPTION, phone: "+91 8754404554", sections: landingSections("north") },
     {
       slug: "privacy-policy",
       title: "Privacy Policy",

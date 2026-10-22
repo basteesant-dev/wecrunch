@@ -50,6 +50,7 @@ export const SETTINGS_GROUPS: { title: string; fields: Field[] }[] = [
       { name: "defaultSeoTitle", label: "Default title", type: "text" },
       { name: "defaultSeoDescription", label: "Default description", type: "textarea", max: 300 },
       { name: "ogImage", label: "Default social sharing image", type: "image" },
+      { name: "googleVerification", label: "Google Search Console verification", type: "text", help: "The HTML tag (or just its content value) from Search Console → Add property → HTML tag" },
     ],
   },
   {
@@ -96,6 +97,7 @@ export type SiteSettings = {
   defaultSeoTitle: string;
   defaultSeoDescription: string;
   ogImage: string;
+  googleVerification: string;
   defaultFormId: string;
   notifyEmails: string;
   retentionDays: number;

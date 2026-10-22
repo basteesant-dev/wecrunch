@@ -109,14 +109,17 @@ export function stateStatusSnapshot(state: PublicState, settings: SiteSettings):
 export async function pageMetadata(snapshot: PageSnapshot, state: PublicState | null, path: string): Promise<Metadata> {
   const settings = await getSettings();
   const p = snapshot.page;
-  // /kerala renders the North page, so its title names the state; /tamilnadu keeps the page title.
-  const title = state?.seoTitle || p.seoTitle || (state && state.slug !== p.slug ? `${p.title} — ${state.name}` : p.title);
-  const description = state?.seoDescription || p.seoDescription || settings.defaultSeoDescription || undefined;
+  // /kerala renders the North page, so its SEO text names the state: "{state}" in the page's
+  // SEO title/description becomes the state ("India" on the page's own URL).
+  const fill = (s: string | null) => s?.replaceAll("{state}", state?.name ?? "India") || null;
+  const title = state?.seoTitle || fill(p.seoTitle) || (state && state.slug !== p.slug ? `${p.title} — ${state.name}` : p.title);
+  const description = state?.seoDescription || fill(p.seoDescription) || settings.defaultSeoDescription || undefined;
   const ogId = p.ogImageId || settings.ogImage;
   const og = ogId ? (await getRefData({ media: [ogId], forms: [], menus: [], galleries: [], models: [], testimonials: false, faqs: false })).media[ogId] : undefined;
   const canonical = p.canonicalUrl || path;
   return {
-    title: path === "/" ? { absolute: p.seoTitle || settings.defaultSeoTitle || settings.siteName } : title,
+    // A title that already names the brand skips the "- WeCrunch" template suffix.
+    title: path === "/" ? { absolute: p.seoTitle || settings.defaultSeoTitle || settings.siteName } : title.includes(settings.siteName) ? { absolute: title } : title,
     description,
     alternates: { canonical },
     robots: p.noIndex ? { index: false, follow: true } : undefined,

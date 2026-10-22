@@ -12,13 +12,16 @@ const menuBody = Poppins({ variable: "--font-poppins", subsets: ["latin"], weigh
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
-  const icon = (await getMediaUrl(settings.favicon || settings.logo))?.url;
+  // app/favicon.ico, icon.png and apple-icon.png are the defaults; a CMS favicon replaces them.
+  const icon = settings.favicon ? (await getMediaUrl(settings.favicon))?.url : undefined;
+  const google = settings.googleVerification.match(/content="([^"]+)"/)?.[1] ?? settings.googleVerification.trim();
   return {
     metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
     title: { default: settings.defaultSeoTitle || settings.siteName, template: settings.titleTemplate || `%s - ${settings.siteName}` },
     description: settings.defaultSeoDescription || undefined,
     applicationName: settings.siteName,
     icons: icon ? { icon, apple: icon } : undefined,
+    verification: google ? { google } : undefined,
   };
 }
 
