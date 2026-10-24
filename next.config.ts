@@ -40,7 +40,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
-    localPatterns: [{ pathname: "/media/**" }, { pathname: "/menu/**" }],
+    localPatterns: [{ pathname: "/media/**" }, { pathname: "/menu/**" }, { pathname: "/images/**" }],
     // Vercel Blob public store URLs. Always allowed: media URLs are stored in the
     // database, so whether an image can render must not depend on build-time env.
     remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/**" }],

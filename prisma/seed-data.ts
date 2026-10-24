@@ -230,6 +230,7 @@ export const seed = {
     notifyEmails: "",
     retentionDays: 0,
     chooseStateText: "Change state",
+    gtmId: "GTM-P8NJST4D",
   },
 
   states: INDIAN_STATES.map((name) => ({

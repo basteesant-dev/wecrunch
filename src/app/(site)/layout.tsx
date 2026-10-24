@@ -6,17 +6,11 @@ import { ANALYTICS_ID } from "@/lib/settings-fields";
 async function Analytics() {
   const s = await getSettings();
   const id = (v: string) => (v && ANALYTICS_ID.test(v) ? v : "");
-  const gtm = id(s.gtmId);
   const ga = id(s.gaId);
   const pixel = id(s.metaPixelId);
   const clarity = id(s.clarityId);
   return (
     <>
-      {gtm && (
-        <Script id="gtm" strategy="afterInteractive">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtm}');`}
-        </Script>
-      )}
       {ga && (
         <>
           <Script src={`https://www.googletagmanager.com/gtag/js?id=${ga}`} strategy="afterInteractive" />

@@ -7,6 +7,7 @@ import { validateAnswers, type Question } from "@/lib/forms";
 import { can } from "@/lib/permissions";
 import { displayPhone, normalizeEmail, normalizePhone, telHref, whatsappHref } from "@/lib/phone";
 import { validateSection } from "@/lib/sections/validate";
+import { ANALYTICS_ID } from "@/lib/settings-fields";
 
 describe("field validation", () => {
   const schema = fieldsSchema([
@@ -123,5 +124,14 @@ describe("passwords and roles", () => {
     expect(can("ENQUIRY_MANAGER", "content.manage")).toBe(false);
     expect(can("ENQUIRY_MANAGER", "enquiries.export")).toBe(true);
     expect(can("SUPER_ADMIN", "users.manage")).toBe(true);
+  });
+});
+
+describe("analytics validation", () => {
+  it("validates GTM ID format", () => {
+    expect(ANALYTICS_ID.test("GTM-P8NJST4D")).toBe(true);
+    expect(ANALYTICS_ID.test("")).toBe(true);
+    expect(ANALYTICS_ID.test("<script>evil</script>")).toBe(false);
+    expect(ANALYTICS_ID.test("GTM-12345678901234567890123456789012345678901")).toBe(false);
   });
 });

@@ -722,23 +722,50 @@ function StateSelector({ c, ctx }: Props) {
   const photo = ctx.data.media[c.background];
   const selectable = ctx.states.filter((st) => st.status !== "UNAVAILABLE");
   return (
-    <section className="relative isolate overflow-hidden bg-yolk pb-16 text-crust">
+    <section className="relative isolate overflow-hidden bg-crust text-white">
+      {/* Golden Fried Chicken Background — Visible on mobile phones and desktop */}
+      <div aria-hidden="true" className="absolute inset-0 -z-20 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/wecrunch-hero-bg.webp"
+          alt=""
+          loading="eager"
+          className="size-full object-cover object-center scale-105"
+        />
+        {/* Rich dark gradient: ensures all text & form controls are 100% legible while chicken shines through */}
+        <div className="absolute inset-0 bg-gradient-to-t from-crust/95 via-crust/85 to-crust/60 sm:bg-gradient-to-r sm:from-crust/95 sm:via-crust/80 sm:to-crust/40" />
+      </div>
+
       <div aria-hidden="true" className="blend-bottom pointer-events-none absolute inset-x-0 bottom-0 -z-10" />
-      <Container className="grid min-h-[calc(100svh-6rem)] grid-cols-1 items-center gap-12 pt-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+
+      <Container className="grid min-h-[58vh] max-w-5xl grid-cols-1 items-center gap-8 py-8 sm:py-12 lg:min-h-[66vh] lg:grid-cols-[1.2fr_0.8fr] lg:gap-14">
         <form action="/api/state" method="get" className="w-full min-w-0 max-w-xl">
-          {c.heading && <h1 className="text-mega [overflow-wrap:anywhere]">{c.heading}</h1>}
-          {c.description && <p className="mt-5 text-xl font-medium">{c.description}</p>}
-          <div className="box mt-10 bg-white p-4 sm:p-5">
-            <label htmlFor="state-select" className="block text-lg font-bold">
+          {/* Mobile-friendly franchise pill badge */}
+          <div className="mb-3.5 inline-flex items-center gap-2 rounded-full border border-yolk/30 bg-yolk/20 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-yolk backdrop-blur-md">
+            <span>🍗 No Frozen • Fresh Chicken</span>
+            <span className="size-1 rounded-full bg-yolk" />
+            <span>Franchise</span>
+          </div>
+
+          {c.heading && (
+            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl md:text-5xl [overflow-wrap:anywhere]">
+              {c.heading}
+            </h1>
+          )}
+
+          {c.description && <p className="mt-2.5 text-base font-medium text-white/85 sm:text-lg">{c.description}</p>}
+
+          <div className="box mt-6 bg-white p-4 text-crust shadow-2xl sm:p-5">
+            <label htmlFor="state-select" className="block text-base font-bold text-crust sm:text-lg">
               {c.label}
             </label>
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-2.5 flex flex-col gap-2.5 sm:flex-row">
               <select
                 id="state-select"
                 name="state"
                 required
                 defaultValue=""
-                className="min-h-13 w-full min-w-0 flex-1 rounded-control border-3 border-crust bg-batter px-4 text-lg"
+                className="min-h-12 w-full min-w-0 flex-1 rounded-control border-2 border-crust bg-batter px-3.5 text-base font-medium text-crust focus:border-ketchup focus:outline-none"
               >
                 <option value="" disabled>
                   {c.placeholder || "- Select -"}
@@ -749,19 +776,22 @@ function StateSelector({ c, ctx }: Props) {
                   </option>
                 ))}
               </select>
-              <button type="submit" className="btn-submit min-h-13 rounded-control px-8 text-lg font-bold">
+              <button type="submit" className="btn-submit min-h-12 rounded-control px-7 text-base font-bold transition hover:scale-[1.02]">
                 {c.buttonLabel}
               </button>
             </div>
           </div>
         </form>
+
         {photo && (
-          <div className="relative mx-auto hidden w-full max-w-md lg:block">
-            <div className="box relative aspect-[4/5] rotate-2 overflow-hidden bg-crust">
-              <MediaImage media={photo} fill priority sizes="448px" alt="" className="object-cover" />
+          <div className="relative mx-auto hidden w-full max-w-xs lg:block">
+            <div className="box relative aspect-[4/5] rotate-2 overflow-hidden bg-crust shadow-2xl">
+              <MediaImage media={photo} fill priority sizes="360px" alt="WeCrunch Fried Chicken" className="object-cover" />
             </div>
             {ctx.settings.tagline && (
-              <p className="sticker absolute -bottom-6 -left-8 size-32 -rotate-12 bg-ketchup p-3 text-base text-white shadow-box-sm">{ctx.settings.tagline}</p>
+              <p className="sticker absolute -bottom-5 -left-5 size-28 -rotate-12 bg-ketchup p-2.5 text-xs font-bold text-white shadow-box-sm flex items-center justify-center text-center">
+                {ctx.settings.tagline}
+              </p>
             )}
           </div>
         )}
