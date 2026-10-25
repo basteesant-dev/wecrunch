@@ -110,7 +110,11 @@ export default async function EnquiriesPage({ searchParams }: PageProps<"/admin/
               {e.stateName ?? "—"}
               {e.city && <span className="block text-xs text-slate-500">{e.city}</span>}
             </td>
-            <td className="px-4 py-2.5 text-xs">{e.utmSource || e.trafficSource || "—"}</td>
+            <td className="px-4 py-2.5 text-xs">
+              <span className="font-medium text-slate-900">{e.utmSource || e.trafficSource || "—"}</span>
+              {e.utmMedium && <span className="block text-[11px] text-slate-500">{e.utmMedium}</span>}
+              {e.utmCampaign && <span className="block text-[10px] text-slate-400 truncate max-w-[140px]" title={e.utmCampaign}>Camp: {e.utmCampaign}</span>}
+            </td>
             <td className="px-4 py-2.5">
               <Badge color={STATUS_COLOR[e.status]}>{STATUS_LABELS[e.status]}</Badge>
             </td>

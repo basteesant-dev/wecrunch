@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Script from "next/script";
 import { useEffect, useId, useRef, useState } from "react";
-import { captureAttribution } from "@/lib/attribution";
+import { captureAttribution, EMPTY_ATTRIBUTION, type Attribution } from "@/lib/attribution";
 import type { FormDef } from "@/lib/content";
 import type { Question } from "@/lib/forms";
 
@@ -45,10 +45,11 @@ export function EnquiryForm({
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
+  const [attribution, setAttribution] = useState<Attribution>(EMPTY_ATTRIBUTION);
   const turnstileKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
-    captureAttribution();
+    setAttribution(captureAttribution());
   }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -62,6 +63,25 @@ export function EnquiryForm({
     setStatus("sending");
     setError("");
     setFieldErrors({});
+
+    const attr = captureAttribution();
+    const utmSource = String(fd.get("utm_source") || attr.utmSource || "");
+    const utmMedium = String(fd.get("utm_medium") || attr.utmMedium || "");
+    const utmCampaign = String(fd.get("utm_campaign") || attr.utmCampaign || "");
+    const utmContent = String(fd.get("utm_content") || attr.utmContent || "");
+    const utmTerm = String(fd.get("utm_term") || attr.utmTerm || "");
+    const landingPage = String(fd.get("landing_page") || attr.landingPage || (typeof location !== "undefined" ? location.href : ""));
+
+    const submissionAttribution: Attribution = {
+      ...attr,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmContent,
+      utmTerm,
+      landingPage,
+    };
+
     try {
       const res = await fetch("/api/enquiries", {
         method: "POST",
@@ -80,7 +100,19 @@ export function EnquiryForm({
           website: fd.get("website") ?? "",
           turnstileToken: fd.get("cf-turnstile-response") ?? undefined,
           sourcePath: location.pathname,
-          attribution: captureAttribution(),
+          utm_source: utmSource,
+          utm_medium: utmMedium,
+          utm_campaign: utmCampaign,
+          utm_content: utmContent,
+          utm_term: utmTerm,
+          landing_page: landingPage,
+          utmSource,
+          utmMedium,
+          utmCampaign,
+          utmContent,
+          utmTerm,
+          landingPage,
+          attribution: submissionAttribution,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -88,6 +120,7 @@ export function EnquiryForm({
         setMessage(data.message || form.successMessage);
         setStatus("done");
         ref.current?.reset();
+        window.location.href = "/thankyou";
         return;
       }
       setError(data.error || "Something went wrong. Please try again or call us.");
@@ -124,15 +157,28 @@ export function EnquiryForm({
       <div className={wrapper} role="status" aria-live="polite">
         <h2 className="font-display text-3xl font-extrabold">{title || form.title}</h2>
         <p className="mt-4 text-lg">{message}</p>
-        <button type="button" className="btn-submit mt-6 min-h-12 rounded-lg px-6 font-semibold" onClick={() => setStatus("idle")}>
-          Send another enquiry
-        </button>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link href="/thankyou" className="btn-submit min-h-12 rounded-lg px-6 font-semibold inline-flex items-center">
+            View Confirmation
+          </Link>
+          <button type="button" className="btn-outline min-h-12 rounded-lg px-6 font-semibold" onClick={() => setStatus("idle")}>
+            Send another enquiry
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <form ref={ref} onSubmit={onSubmit} noValidate className={wrapper} aria-labelledby={`${id}-title`} data-form-id={form.id}>
+      {/* Hidden UTM Campaign Tracking Fields */}
+      <input type="hidden" name="utm_source" value={attribution.utmSource} />
+      <input type="hidden" name="utm_medium" value={attribution.utmMedium} />
+      <input type="hidden" name="utm_campaign" value={attribution.utmCampaign} />
+      <input type="hidden" name="utm_content" value={attribution.utmContent} />
+      <input type="hidden" name="utm_term" value={attribution.utmTerm} />
+      <input type="hidden" name="landing_page" value={attribution.landingPage} />
+
       <h2 id={`${id}-title`} className={`${compact ? "mb-4 text-[1.85rem] short:mb-2 short:text-[1.55rem]" : "mb-6 text-[2rem]"} font-display font-extrabold leading-tight`}>
         {title || form.title}
       </h2>

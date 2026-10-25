@@ -28,6 +28,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = { themeColor: "#3a2312", width: "device-width", initialScale: 1 };
 
+import { AttributionTracker } from "@/components/site/AttributionTracker";
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const settings = await getSettings();
   const gtmId = settings.gtmId && ANALYTICS_ID.test(settings.gtmId) ? settings.gtmId : "";
@@ -48,6 +50,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         )}
       </head>
       <body className="min-h-dvh">
+        <AttributionTracker />
         {gtmId && (
           <noscript>
             <iframe

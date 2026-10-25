@@ -22,6 +22,18 @@ export const enquiryInputSchema = z.object({
   website: z.string().max(500).optional(), // honeypot: real visitors never fill this
   turnstileToken: z.string().max(4000).optional(),
   sourcePath: short(300),
+  utm_source: short(200),
+  utm_medium: short(200),
+  utm_campaign: short(200),
+  utm_term: short(200),
+  utm_content: short(200),
+  landing_page: short(2000),
+  utmSource: short(200),
+  utmMedium: short(200),
+  utmCampaign: short(200),
+  utmTerm: short(200),
+  utmContent: short(200),
+  landingPage: short(2000),
   attribution: z
     .object({
       utmSource: short(200),
@@ -29,7 +41,7 @@ export const enquiryInputSchema = z.object({
       utmCampaign: short(200),
       utmTerm: short(200),
       utmContent: short(200),
-      landingPage: short(500),
+      landingPage: short(2000),
       referrer: short(500),
       trafficSource: short(60),
     })
@@ -104,7 +116,15 @@ export async function submitEnquiry(raw: unknown, ctx: { ip: string | null; user
   });
   if (recent) return { ok: true, message: form.successMessage, enquiryId: recent.id, duplicate: true };
 
-  const a = input.attribution;
+  const a = input.attribution ?? {};
+  const utmSource = input.utmSource || input.utm_source || a.utmSource || null;
+  const utmMedium = input.utmMedium || input.utm_medium || a.utmMedium || null;
+  const utmCampaign = input.utmCampaign || input.utm_campaign || a.utmCampaign || null;
+  const utmTerm = input.utmTerm || input.utm_term || a.utmTerm || null;
+  const utmContent = input.utmContent || input.utm_content || a.utmContent || null;
+  const landingPage = input.landingPage || input.landing_page || a.landingPage || null;
+  const trafficSource = a.trafficSource || (utmSource ? utmSource : null);
+
   const enquiry = await db.franchiseEnquiry.create({
     data: {
       formId: form.id,
@@ -119,13 +139,13 @@ export async function submitEnquiry(raw: unknown, ctx: { ip: string | null; user
       consent: input.consent,
       consentText: input.consent ? form.consentText : null,
       sourcePath: input.sourcePath || null,
-      landingPage: a.landingPage || null,
-      utmSource: a.utmSource || null,
-      utmMedium: a.utmMedium || null,
-      utmCampaign: a.utmCampaign || null,
-      utmTerm: a.utmTerm || null,
-      utmContent: a.utmContent || null,
-      trafficSource: a.trafficSource || null,
+      landingPage,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmTerm,
+      utmContent,
+      trafficSource,
       referrer: a.referrer || null,
       ipHash,
       userAgent: ctx.userAgent,
@@ -154,6 +174,12 @@ export async function notifyEnquiry(enquiryId: string, siteName: string, extraRe
       answers,
       `Message: ${e.message ?? "-"}`,
       `Source: ${e.sourcePath ?? "-"} (${e.trafficSource ?? "unknown"})`,
+      `UTM Source: ${e.utmSource ?? "-"}`,
+      `UTM Medium: ${e.utmMedium ?? "-"}`,
+      `UTM Campaign: ${e.utmCampaign ?? "-"}`,
+      `UTM Content: ${e.utmContent ?? "-"}`,
+      `UTM Term: ${e.utmTerm ?? "-"}`,
+      `Landing Page: ${e.landingPage ?? "-"}`,
     ].join("\n"),
   );
   if (e.form?.sendConfirmation) {

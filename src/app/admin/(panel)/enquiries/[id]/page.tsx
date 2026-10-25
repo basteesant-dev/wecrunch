@@ -66,15 +66,17 @@ export default async function EnquiryDetail({ params }: PageProps<"/admin/enquir
               <Row label="Consent">{e.consent ? `Yes — “${e.consentText ?? ""}”` : "No"}</Row>
             </dl>
           </Card>
-          <Card title="Source">
+          <Card title="Source & UTM Campaign Tracking">
             <dl>
               <Row label="Form">{e.form?.name}</Row>
               <Row label="Submitted on">{e.sourcePath}</Row>
               <Row label="Landing page">{e.landingPage}</Row>
               <Row label="Traffic source">{e.trafficSource}</Row>
-              <Row label="UTM source / medium">{[e.utmSource, e.utmMedium].filter(Boolean).join(" / ")}</Row>
-              <Row label="UTM campaign">{e.utmCampaign}</Row>
-              <Row label="UTM term / content">{[e.utmTerm, e.utmContent].filter(Boolean).join(" / ")}</Row>
+              <Row label="UTM Source">{e.utmSource}</Row>
+              <Row label="UTM Medium">{e.utmMedium}</Row>
+              <Row label="UTM Campaign">{e.utmCampaign}</Row>
+              <Row label="UTM Content">{e.utmContent}</Row>
+              <Row label="UTM Term">{e.utmTerm}</Row>
               <Row label="Referrer">{e.referrer}</Row>
             </dl>
           </Card>

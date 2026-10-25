@@ -135,4 +135,90 @@ describe("submitEnquiry", () => {
     expect(sent[1].to).toEqual(["asha@example.com"]);
     setTransport(null);
   });
+
+  it("captures Facebook Ads lead with separate UTM columns matching user sample", async () => {
+    // Sample Facebook Ads lead URL:
+    // https://example.com/admissions?utm_source=facebook&utm_medium=paid_social&utm_campaign=school_admissions&utm_content=video_ad_01
+    const r = await submitEnquiry(
+      {
+        formId,
+        fullName: "Rahul",
+        email: "rahul@example.com",
+        phone: "+919876543210",
+        stateSlug: "kerala",
+        city: "Kochi",
+        answers: { ready: "Yes, ready" },
+        consent: true,
+        landing_page: "https://example.com/admissions?utm_source=facebook&utm_medium=paid_social&utm_campaign=school_admissions&utm_content=video_ad_01",
+        utm_source: "facebook",
+        utm_medium: "paid_social",
+        utm_campaign: "school_admissions",
+        utm_content: "video_ad_01",
+        utm_term: "",
+      },
+      ctx(freshIp()),
+    );
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    const lead = await db.franchiseEnquiry.findUniqueOrThrow({ where: { id: r.enquiryId! } });
+    console.log("\n[WECRUNCH TEST LEAD RECORD IN DATABASE]");
+    console.log(JSON.stringify({
+      id: lead.id,
+      fullName: lead.fullName,
+      email: lead.email,
+      phone: lead.phone,
+      utmSource: lead.utmSource,
+      utmMedium: lead.utmMedium,
+      utmCampaign: lead.utmCampaign,
+      utmContent: lead.utmContent,
+      utmTerm: lead.utmTerm,
+      landingPage: lead.landingPage,
+      status: lead.status,
+    }, null, 2));
+
+    expect(lead.fullName).toBe("Rahul");
+    expect(lead.utmSource).toBe("facebook");
+    expect(lead.utmMedium).toBe("paid_social");
+    expect(lead.utmCampaign).toBe("school_admissions");
+    expect(lead.utmContent).toBe("video_ad_01");
+    expect(lead.utmTerm).toBeNull();
+    expect(lead.landingPage).toBe("https://example.com/admissions?utm_source=facebook&utm_medium=paid_social&utm_campaign=school_admissions&utm_content=video_ad_01");
+  });
+
+  it("captures Google Ads lead with search terms and landing URL", async () => {
+    const r = await submitEnquiry(
+      {
+        formId,
+        fullName: "Google Ads Visitor",
+        email: "gads@example.com",
+        phone: "+919876543211",
+        stateSlug: "kerala",
+        city: "Ernakulam",
+        answers: { ready: "Yes, ready" },
+        consent: true,
+        attribution: {
+          utmSource: "google",
+          utmMedium: "cpc",
+          utmCampaign: "brand_search",
+          utmTerm: "chicken_franchise_kerala",
+          utmContent: "search_ad_v2",
+          landingPage: "https://example.com/kerala?utm_source=google&utm_medium=cpc&utm_campaign=brand_search&utm_term=chicken_franchise_kerala&utm_content=search_ad_v2",
+        },
+      },
+      ctx(freshIp()),
+    );
+
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    const lead = await db.franchiseEnquiry.findUniqueOrThrow({ where: { id: r.enquiryId! } });
+    expect(lead.utmSource).toBe("google");
+    expect(lead.utmMedium).toBe("cpc");
+    expect(lead.utmCampaign).toBe("brand_search");
+    expect(lead.utmTerm).toBe("chicken_franchise_kerala");
+    expect(lead.utmContent).toBe("search_ad_v2");
+    expect(lead.landingPage).toContain("utm_source=google");
+  });
 });
