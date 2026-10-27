@@ -24,6 +24,8 @@ model AdminUser {
   name         String
   passwordHash String
   role         Role
+  // Module permissions (see src/lib/permissions.ts). Ignored for SUPER_ADMIN, who has all.
+  permissions  String[]  @default([])
   isActive     Boolean   @default(true)
   failedLogins Int       @default(0)
   lockedUntil  DateTime?
@@ -436,7 +438,8 @@ model FranchiseEnquiry {
   utmCampaign   String?
   utmTerm       String?
   utmContent    String?
-  trafficSource String?
+  utmAdgroupName String?
+  trafficSource String? // e.g. google_ads, organic_search, ai:ChatGPT, ai_agent:ChatGPT
   referrer      String?
   ipHash        String?
   userAgent     String?

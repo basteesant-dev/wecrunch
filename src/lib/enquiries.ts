@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { detectAiAgent, trafficLabel } from "@/lib/attribution";
 import { db } from "@/lib/db";
 import { hashIp } from "@/lib/crypto";
 import { sendMail } from "@/lib/email";
@@ -27,12 +28,14 @@ export const enquiryInputSchema = z.object({
   utm_campaign: short(200),
   utm_term: short(200),
   utm_content: short(200),
+  utm_adgroupname: short(200),
   landing_page: short(2000),
   utmSource: short(200),
   utmMedium: short(200),
   utmCampaign: short(200),
   utmTerm: short(200),
   utmContent: short(200),
+  utmAdgroupName: short(200),
   landingPage: short(2000),
   attribution: z
     .object({
@@ -41,6 +44,7 @@ export const enquiryInputSchema = z.object({
       utmCampaign: short(200),
       utmTerm: short(200),
       utmContent: short(200),
+      utmAdgroupName: short(200),
       landingPage: short(2000),
       referrer: short(500),
       trafficSource: short(60),
@@ -67,7 +71,10 @@ async function verifyTurnstile(token: string | undefined, ip: string | null) {
   return ((await res.json()) as { success?: boolean }).success === true;
 }
 
-export async function submitEnquiry(raw: unknown, ctx: { ip: string | null; userAgent: string | null }): Promise<SubmitResult> {
+export async function submitEnquiry(
+  raw: unknown,
+  ctx: { ip: string | null; userAgent: string | null; signatureAgent?: string | null },
+): Promise<SubmitResult> {
   const parsed = enquiryInputSchema.safeParse(raw);
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -122,8 +129,11 @@ export async function submitEnquiry(raw: unknown, ctx: { ip: string | null; user
   const utmCampaign = input.utmCampaign || input.utm_campaign || a.utmCampaign || null;
   const utmTerm = input.utmTerm || input.utm_term || a.utmTerm || null;
   const utmContent = input.utmContent || input.utm_content || a.utmContent || null;
+  const utmAdgroupName = input.utmAdgroupName || input.utm_adgroupname || a.utmAdgroupName || null;
   const landingPage = input.landingPage || input.landing_page || a.landingPage || null;
-  const trafficSource = a.trafficSource || (utmSource ? utmSource : null);
+  // An AI agent filling the form for someone outranks how the page was first reached.
+  const aiAgent = detectAiAgent(ctx.userAgent, ctx.signatureAgent);
+  const trafficSource = aiAgent ? `ai_agent:${aiAgent}` : a.trafficSource || utmSource || null;
 
   const enquiry = await db.franchiseEnquiry.create({
     data: {
@@ -145,6 +155,7 @@ export async function submitEnquiry(raw: unknown, ctx: { ip: string | null; user
       utmCampaign,
       utmTerm,
       utmContent,
+      utmAdgroupName,
       trafficSource,
       referrer: a.referrer || null,
       ipHash,
@@ -173,10 +184,11 @@ export async function notifyEnquiry(enquiryId: string, siteName: string, extraRe
       `City: ${e.city ?? "-"}`,
       answers,
       `Message: ${e.message ?? "-"}`,
-      `Source: ${e.sourcePath ?? "-"} (${e.trafficSource ?? "unknown"})`,
+      `Source: ${e.sourcePath ?? "-"} (${trafficLabel(e.trafficSource) || "unknown"})`,
       `UTM Source: ${e.utmSource ?? "-"}`,
       `UTM Medium: ${e.utmMedium ?? "-"}`,
       `UTM Campaign: ${e.utmCampaign ?? "-"}`,
+      `UTM Ad group: ${e.utmAdgroupName ?? "-"}`,
       `UTM Content: ${e.utmContent ?? "-"}`,
       `UTM Term: ${e.utmTerm ?? "-"}`,
       `Landing Page: ${e.landingPage ?? "-"}`,

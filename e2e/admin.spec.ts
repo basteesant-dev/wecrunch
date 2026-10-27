@@ -73,7 +73,8 @@ test("a state set to coming soon shows the coming-soon page", async ({ page }) =
 test("enquiries can be found, worked and exported", async ({ page }) => {
   const name = `Lead ${Date.now()}`;
   const post = await page.request.post("/api/enquiries", {
-    headers: { origin: "http://localhost:3200" },
+    // Signature-Agent is what ChatGPT agent sends when it fills a form for someone.
+    headers: { origin: "http://localhost:3200", "signature-agent": '"https://chatgpt.com"' },
     data: {
       formId: await formId(page),
       fullName: name,
@@ -84,7 +85,7 @@ test("enquiries can be found, worked and exported", async ({ page }) => {
       answers: {},
       consent: true,
       sourcePath: "/tamilnadu",
-      attribution: { utmSource: "google", utmCampaign: "e2e" },
+      attribution: { utmSource: "google", utmCampaign: "e2e", utmAdgroupName: "e2e-adgroup" },
     },
   });
   expect(post.status()).toBe(200);
@@ -95,6 +96,8 @@ test("enquiries can be found, worked and exported", async ({ page }) => {
   // mounted (hidden), which would make "Status" ambiguous with the list filter.
   await page.goto((await page.getByRole("link", { name }).getAttribute("href"))!);
   await expect(page.getByText("Madurai")).toBeVisible();
+  await expect(page.getByText("AI agent · ChatGPT")).toBeVisible();
+  await expect(page.getByText("e2e-adgroup")).toBeVisible();
   await page.getByLabel("Status").selectOption("CONTACTED");
   await page.getByRole("button", { name: "Update" }).click();
   await expect(page.getByRole("status")).toContainText("Enquiry updated");
@@ -106,6 +109,7 @@ test("enquiries can be found, worked and exported", async ({ page }) => {
   expect(csv).toContain(name);
   expect(csv).toContain("Contacted");
   expect(csv).toContain("e2e");
+  expect(csv).toContain("e2e-adgroup");
 });
 
 test("media can be uploaded", async ({ page }) => {
@@ -137,6 +141,16 @@ test("roles restrict access: content editors cannot see enquiries", async ({ pag
   await expect(editor).toHaveURL(/denied=users\.manage/);
   await editor.goto("/admin/pages");
   await expect(editor.getByRole("heading", { name: "Pages" })).toBeVisible();
+
+  // Module permissions are per user: granting "view enquiries" works without changing the role.
+  // Reloaded as a fresh document: the hidden "new user" form would otherwise match too.
+  await page.goto(page.url());
+  await page.getByLabel("Enquiries — view").check();
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("status")).toContainText("Saved");
+  await editor.goto("/admin/enquiries");
+  await expect(editor.getByRole("heading", { name: "Franchise enquiries" })).toBeVisible();
+  expect((await editor.request.get("/api/admin/enquiries/export")).status()).toBe(403);
 });
 
 test("the audit log records sign-ins, publishing and exports", async ({ page }) => {

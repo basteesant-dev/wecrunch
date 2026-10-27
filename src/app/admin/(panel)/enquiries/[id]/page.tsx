@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/admin/ActionForm";
 import { Card, PageHeader, fmtDate, inputCls, toLocalInput } from "@/components/admin/ui";
+import { trafficLabel } from "@/lib/attribution";
 import { audit } from "@/lib/audit";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -29,11 +30,15 @@ export default async function EnquiryDetail({ params }: PageProps<"/admin/enquir
   if (!e) notFound();
   // Viewing personal data is itself recorded.
   await audit(user, "enquiry.view", { entityType: "FranchiseEnquiry", entityId: id });
-  const owners = await db.adminUser.findMany({ where: { isActive: true, role: { in: ["SUPER_ADMIN", "ENQUIRY_MANAGER"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } });
+  const owners = await db.adminUser.findMany({
+    where: { isActive: true, OR: [{ role: "SUPER_ADMIN" }, { permissions: { has: "enquiries.update" } }] },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
   const questions = (e.form?.fields as Question[] | undefined) ?? [];
   const answers = e.answers as Record<string, string | string[]>;
   const label = (key: string) => questions.find((q) => q.name === key)?.label ?? key;
-  const editable = can(user.role, "enquiries.update");
+  const editable = can(user, "enquiries.update");
 
   return (
     <>
@@ -71,13 +76,15 @@ export default async function EnquiryDetail({ params }: PageProps<"/admin/enquir
               <Row label="Form">{e.form?.name}</Row>
               <Row label="Submitted on">{e.sourcePath}</Row>
               <Row label="Landing page">{e.landingPage}</Row>
-              <Row label="Traffic source">{e.trafficSource}</Row>
+              <Row label="Traffic source">{trafficLabel(e.trafficSource)}</Row>
               <Row label="UTM Source">{e.utmSource}</Row>
               <Row label="UTM Medium">{e.utmMedium}</Row>
               <Row label="UTM Campaign">{e.utmCampaign}</Row>
-              <Row label="UTM Content">{e.utmContent}</Row>
-              <Row label="UTM Term">{e.utmTerm}</Row>
+              <Row label="UTM Ad group">{e.utmAdgroupName}</Row>
+              <Row label="UTM Content (ad / creative)">{e.utmContent}</Row>
+              <Row label="UTM Term (keyword)">{e.utmTerm}</Row>
               <Row label="Referrer">{e.referrer}</Row>
+              <Row label="Browser / agent">{e.userAgent}</Row>
             </dl>
           </Card>
         </div>

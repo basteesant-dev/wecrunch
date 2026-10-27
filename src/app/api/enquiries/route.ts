@@ -11,7 +11,11 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object") return Response.json({ ok: false, error: "Invalid request" }, { status: 400 });
 
-  const result = await submitEnquiry(body, { ip: await clientIp(), userAgent: await userAgent() });
+  const result = await submitEnquiry(body, {
+    ip: await clientIp(),
+    userAgent: await userAgent(),
+    signatureAgent: request.headers.get("signature-agent"),
+  });
 
   if (result.ok && result.enquiryId && !result.duplicate) {
     const settings = await getSettings();

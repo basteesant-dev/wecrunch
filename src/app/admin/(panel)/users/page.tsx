@@ -11,14 +11,14 @@ export default async function UsersPage() {
     <>
       <PageHeader
         title="Users"
-        description="Super admins manage everything. Content editors manage the website. Enquiry managers see and work leads only."
+        description="Super admins manage everything. Every other user only sees the modules ticked on their page; the role sets the starting set."
         actions={
           <Link href="/admin/users/new" className={btn.primary}>
             New user
           </Link>
         }
       />
-      <Table head={["Name", "Email", "Role", "Status", "Last sign-in"]}>
+      <Table head={["Name", "Email", "Role", "Modules", "Status", "Last sign-in"]}>
         {users.map((u) => (
           <tr key={u.id} className="hover:bg-slate-50">
             <td className="px-4 py-2.5">
@@ -28,6 +28,7 @@ export default async function UsersPage() {
             </td>
             <td className="px-4 py-2.5">{u.email}</td>
             <td className="px-4 py-2.5">{ROLE_LABELS[u.role]}</td>
+            <td className="px-4 py-2.5 text-xs text-slate-600">{u.role === "SUPER_ADMIN" ? "All" : u.permissions.join(", ") || "None"}</td>
             <td className="px-4 py-2.5">
               {!u.isActive ? <Badge color="red">Inactive</Badge> : u.lockedUntil && u.lockedUntil > new Date() ? <Badge color="amber">Locked</Badge> : <Badge color="green">Active</Badge>}
             </td>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge, PageHeader, Table, btn, fmtDate, inputCls } from "@/components/admin/ui";
 import { filterQuery, filterWhere, readFilters } from "@/lib/admin/enquiry-filters";
+import { trafficLabel } from "@/lib/attribution";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ENQUIRY_STATUSES, STATUS_LABELS } from "@/lib/enquiries";
@@ -19,7 +20,7 @@ export default async function EnquiriesPage({ searchParams }: PageProps<"/admin/
     db.franchiseEnquiry.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, include: { owner: { select: { name: true } } } }),
     db.franchiseEnquiry.count({ where }),
     db.state.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
-    db.adminUser.findMany({ where: { role: { in: ["SUPER_ADMIN", "ENQUIRY_MANAGER"] } }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    db.adminUser.findMany({ where: { OR: [{ role: "SUPER_ADMIN" }, { permissions: { has: "enquiries.update" } }] }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -29,7 +30,7 @@ export default async function EnquiriesPage({ searchParams }: PageProps<"/admin/
         title="Franchise enquiries"
         description={`${total.toLocaleString("en-IN")} matching enquiries`}
         actions={
-          can(user.role, "enquiries.export") && (
+          can(user, "enquiries.export") && (
             <a href={`/api/admin/enquiries/export?${filterQuery(f)}`} className={btn.secondary}>
               Export CSV
             </a>
@@ -111,8 +112,8 @@ export default async function EnquiriesPage({ searchParams }: PageProps<"/admin/
               {e.city && <span className="block text-xs text-slate-500">{e.city}</span>}
             </td>
             <td className="px-4 py-2.5 text-xs">
-              <span className="font-medium text-slate-900">{e.utmSource || e.trafficSource || "—"}</span>
-              {e.utmMedium && <span className="block text-[11px] text-slate-500">{e.utmMedium}</span>}
+              <span className="font-medium text-slate-900">{trafficLabel(e.trafficSource) || e.utmSource || "—"}</span>
+              {(e.utmSource || e.utmMedium) && <span className="block text-[11px] text-slate-500">{[e.utmSource, e.utmMedium].filter(Boolean).join(" / ")}</span>}
               {e.utmCampaign && <span className="block text-[10px] text-slate-400 truncate max-w-[140px]" title={e.utmCampaign}>Camp: {e.utmCampaign}</span>}
             </td>
             <td className="px-4 py-2.5">

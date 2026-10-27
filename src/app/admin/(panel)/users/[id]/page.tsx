@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/admin/ActionForm";
+import { RolePermissions } from "@/components/admin/RolePermissions";
 import { Card, PageHeader, inputCls } from "@/components/admin/ui";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { ROLE_LABELS } from "@/lib/permissions";
+import { ROLE_PRESETS } from "@/lib/permissions";
 import { saveUser, unlockUser } from "../actions";
 
 export default async function UserEdit({ params }: PageProps<"/admin/users/[id]">) {
@@ -26,16 +27,7 @@ export default async function UserEdit({ params }: PageProps<"/admin/users/[id]"
             Email
             <input name="email" type="email" required defaultValue={u?.email} autoComplete="off" className={field} />
           </label>
-          <label className="block font-medium">
-            Role
-            <select name="role" defaultValue={u?.role ?? "CONTENT_EDITOR"} className={field}>
-              {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <RolePermissions role={u?.role ?? "CONTENT_EDITOR"} permissions={u?.permissions ?? [...ROLE_PRESETS.CONTENT_EDITOR]} className={field} />
           <label className="flex items-center gap-2 font-medium">
             <input type="checkbox" name="isActive" defaultChecked={u?.isActive ?? true} /> Active
           </label>

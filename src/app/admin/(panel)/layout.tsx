@@ -40,7 +40,7 @@ const GROUPS: { title: string; items: { href: string; label: string; perm: Permi
 
 export default async function PanelLayout({ children }: LayoutProps<"/admin">) {
   const user = await requireUser();
-  const groups = GROUPS.map((g) => ({ title: g.title, items: g.items.filter((i) => can(user.role, i.perm) || i.href === "/admin/dashboard").map(({ href, label }) => ({ href, label })) })).filter((g) => g.items.length);
+  const groups = GROUPS.map((g) => ({ title: g.title, items: g.items.filter((i) => can(user, i.perm) || i.href === "/admin/dashboard").map(({ href, label }) => ({ href, label })) })).filter((g) => g.items.length);
   return (
     <div className="admin-ui min-h-dvh bg-slate-100 text-slate-900 lg:grid lg:grid-cols-[15rem_1fr]">
       <aside className="bg-slate-900 p-4 text-white lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto">

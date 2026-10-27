@@ -70,6 +70,7 @@ export function EnquiryForm({
     const utmCampaign = String(fd.get("utm_campaign") || attr.utmCampaign || "");
     const utmContent = String(fd.get("utm_content") || attr.utmContent || "");
     const utmTerm = String(fd.get("utm_term") || attr.utmTerm || "");
+    const utmAdgroupName = String(fd.get("utm_adgroupname") || attr.utmAdgroupName || "");
     const landingPage = String(fd.get("landing_page") || attr.landingPage || (typeof location !== "undefined" ? location.href : ""));
 
     const submissionAttribution: Attribution = {
@@ -79,6 +80,7 @@ export function EnquiryForm({
       utmCampaign,
       utmContent,
       utmTerm,
+      utmAdgroupName,
       landingPage,
     };
 
@@ -105,12 +107,14 @@ export function EnquiryForm({
           utm_campaign: utmCampaign,
           utm_content: utmContent,
           utm_term: utmTerm,
+          utm_adgroupname: utmAdgroupName,
           landing_page: landingPage,
           utmSource,
           utmMedium,
           utmCampaign,
           utmContent,
           utmTerm,
+          utmAdgroupName,
           landingPage,
           attribution: submissionAttribution,
         }),
@@ -177,6 +181,7 @@ export function EnquiryForm({
       <input type="hidden" name="utm_campaign" value={attribution.utmCampaign} />
       <input type="hidden" name="utm_content" value={attribution.utmContent} />
       <input type="hidden" name="utm_term" value={attribution.utmTerm} />
+      <input type="hidden" name="utm_adgroupname" value={attribution.utmAdgroupName} />
       <input type="hidden" name="landing_page" value={attribution.landingPage} />
 
       <h2 id={`${id}-title`} className={`${compact ? "mb-4 text-[1.85rem] short:mb-2 short:text-[1.55rem]" : "mb-6 text-[2rem]"} font-display font-extrabold leading-tight`}>

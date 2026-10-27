@@ -17,8 +17,8 @@ function Stat({ label, value, href }: { label: string; value: number; href: stri
 export default async function Dashboard({ searchParams }: PageProps<"/admin/dashboard">) {
   const user = await requireUser();
   const { denied } = await searchParams;
-  const leads = can(user.role, "enquiries.read");
-  const content = can(user.role, "content.manage");
+  const leads = can(user, "enquiries.read");
+  const content = can(user, "content.manage");
   const now = new Date();
   const endOfToday = new Date(now);
   endOfToday.setHours(23, 59, 59, 999);
@@ -39,7 +39,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/admin/dash
       <PageHeader title={`Hello, ${user.name.split(" ")[0]}`} description="What needs attention today." />
       {denied && (
         <p role="alert" className="mb-6 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Your role does not have access to that area.
+          You do not have permission for that module. Ask a super admin to grant it on the Users page.
         </p>
       )}
       {leads && (

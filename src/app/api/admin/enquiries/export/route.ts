@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { trafficLabel } from "@/lib/attribution";
 import { audit } from "@/lib/audit";
 import { userWith } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   const ist = new Intl.DateTimeFormat("en-IN", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Kolkata" });
   const header = [
     "Received (IST)", "Name", "Email", "Mobile", "State", "City", "Status", "Owner", "Follow up (IST)", "Message",
-    ...answerKeys, "Consent", "Form", "Traffic source", "UTM source", "UTM medium", "UTM campaign", "UTM term", "UTM content",
+    ...answerKeys, "Consent", "Form", "Traffic source", "UTM source", "UTM medium", "UTM campaign", "UTM ad group", "UTM term", "UTM content",
     "Landing page", "Submitted on", "Referrer", "ID",
   ];
   const lines = rows.map((r) => {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     return [
       ist.format(r.createdAt), r.fullName, r.email, r.phone, r.stateName, r.city, STATUS_LABELS[r.status], r.owner?.name,
       r.followUpAt ? ist.format(r.followUpAt) : "", r.message, ...answerKeys.map((k) => a[k]), r.consent ? "Yes" : "No", r.form?.name,
-      r.trafficSource, r.utmSource, r.utmMedium, r.utmCampaign, r.utmTerm, r.utmContent, r.landingPage, r.sourcePath, r.referrer, r.id,
+      trafficLabel(r.trafficSource), r.utmSource, r.utmMedium, r.utmCampaign, r.utmAdgroupName, r.utmTerm, r.utmContent, r.landingPage, r.sourcePath, r.referrer, r.id,
     ].map(csvCell).join(",");
   });
 

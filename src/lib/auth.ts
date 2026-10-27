@@ -15,6 +15,7 @@ export type CurrentUser = {
   email: string;
   name: string;
   role: import("@/generated/prisma/enums").Role;
+  permissions: string[];
 };
 
 export async function createSession(userId: string) {
@@ -46,7 +47,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!token) return null;
   const session = await db.session.findUnique({
     where: { id: sha256(token) },
-    select: { expiresAt: true, user: { select: { id: true, email: true, name: true, role: true, isActive: true } } },
+    select: { expiresAt: true, user: { select: { id: true, email: true, name: true, role: true, permissions: true, isActive: true } } },
   });
   if (!session || session.expiresAt < new Date() || !session.user.isActive) return null;
   const { isActive: _active, ...user } = session.user;
@@ -57,12 +58,12 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 export async function requireUser(permission?: Permission): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/admin/login");
-  if (permission && !can(user.role, permission)) redirect(`/admin/dashboard?denied=${permission}`);
+  if (permission && !can(user, permission)) redirect(`/admin/dashboard?denied=${permission}`);
   return user;
 }
 
 // For route handlers: returns null instead of redirecting.
 export async function userWith(permission: Permission) {
   const user = await getCurrentUser();
-  return user && can(user.role, permission) ? user : null;
+  return user && can(user, permission) ? user : null;
 }

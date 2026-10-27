@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { csvCell } from "@/lib/admin/enquiry-filters";
-import { detectTrafficSource } from "@/lib/attribution";
+import { detectAiAgent, detectTrafficSource, trafficLabel } from "@/lib/attribution";
 import { hashPassword, passwordProblems, verifyPassword } from "@/lib/crypto";
 import { fieldsSchema } from "@/lib/fields-schema";
 import { validateAnswers, type Question } from "@/lib/forms";
-import { can } from "@/lib/permissions";
+import { can, ROLE_PRESETS } from "@/lib/permissions";
 import { displayPhone, normalizeEmail, normalizePhone, telHref, whatsappHref } from "@/lib/phone";
 import { validateSection } from "@/lib/sections/validate";
 import { ANALYTICS_ID } from "@/lib/settings-fields";
@@ -96,6 +96,19 @@ describe("traffic source detection", () => {
     expect(detectTrafficSource(p(""), "https://l.instagram.com/x", "wecrunchfranchise.com")).toBe("social");
     expect(detectTrafficSource(p(""), "https://blog.example.com/a", "wecrunchfranchise.com")).toBe("referral");
   });
+  it("recognises AI assistants and AI agents", () => {
+    expect(detectTrafficSource(p("utm_source=chatgpt.com"), "", "wecrunchfranchise.com")).toBe("ai:ChatGPT");
+    expect(detectTrafficSource(p(""), "https://www.perplexity.ai/search/x", "wecrunchfranchise.com")).toBe("ai:Perplexity");
+    expect(detectTrafficSource(p(""), "https://gemini.google.com/", "wecrunchfranchise.com")).toBe("ai:Gemini");
+    expect(detectTrafficSource(p("utm_source=facebook"), "", "wecrunchfranchise.com")).toBe("facebook");
+    expect(trafficLabel("ai:ChatGPT")).toBe("AI assistant · ChatGPT");
+    expect(trafficLabel("ai_agent:Claude")).toBe("AI agent · Claude");
+    expect(trafficLabel("google_ads")).toBe("Google Ads");
+    expect(detectAiAgent("Mozilla/5.0 Chrome/130", '"https://chatgpt.com"')).toBe("ChatGPT");
+    expect(detectAiAgent("Mozilla/5.0 (compatible; ChatGPT-User/1.0; +https://openai.com/bot)", null)).toBe("ChatGPT");
+    expect(detectAiAgent("Mozilla/5.0 (compatible; Claude-User/1.0)", null)).toBe("Claude");
+    expect(detectAiAgent("Mozilla/5.0 Chrome/130 Safari/537.36", null)).toBeNull();
+  });
 });
 
 describe("CSV export cells", () => {
@@ -120,10 +133,13 @@ describe("passwords and roles", () => {
     expect(passwordProblems("LongEnough123")).toHaveLength(0);
   });
   it("limits roles to their areas", () => {
-    expect(can("CONTENT_EDITOR", "enquiries.read")).toBe(false);
-    expect(can("ENQUIRY_MANAGER", "content.manage")).toBe(false);
-    expect(can("ENQUIRY_MANAGER", "enquiries.export")).toBe(true);
-    expect(can("SUPER_ADMIN", "users.manage")).toBe(true);
+    const editor = { role: "CONTENT_EDITOR" as const, permissions: [...ROLE_PRESETS.CONTENT_EDITOR] };
+    const leads = { role: "ENQUIRY_MANAGER" as const, permissions: [...ROLE_PRESETS.ENQUIRY_MANAGER] };
+    expect(can(editor, "enquiries.read")).toBe(false);
+    expect(can(leads, "content.manage")).toBe(false);
+    expect(can(leads, "enquiries.export")).toBe(true);
+    expect(can({ role: "SUPER_ADMIN", permissions: [] }, "users.manage")).toBe(true);
+    expect(can({ role: "CONTENT_EDITOR", permissions: ["enquiries.read"] }, "enquiries.read")).toBe(true);
   });
 });
 
