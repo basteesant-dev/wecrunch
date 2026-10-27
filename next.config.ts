@@ -4,15 +4,18 @@ const isDev = process.env.NODE_ENV !== "production";
 
 // Inline scripts are allowed because public pages are static (no per-request
 // nonce). Third-party hosts are limited to the analytics/captcha/maps we use.
+// Google Ads tags loaded through GTM send conversions and remarketing to the
+// google.com / doubleclick hosts below; without them those hits are blocked.
+const googleAds = "https://www.googleadservices.com https://googleads.g.doubleclick.net https://www.google.com";
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://connect.facebook.net https://www.clarity.ms https://scripts.clarity.ms https://challenges.cloudflare.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com ${googleAds} https://connect.facebook.net https://www.clarity.ms https://scripts.clarity.ms https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "media-src 'self' https: blob:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://connect.facebook.net https://*.facebook.com https://*.clarity.ms https://challenges.cloudflare.com",
-  "frame-src 'self' https://maps.google.com https://www.google.com https://challenges.cloudflare.com https://www.googletagmanager.com",
+  `connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com ${googleAds} https://ad.doubleclick.net https://*.g.doubleclick.net https://pagead2.googlesyndication.com https://connect.facebook.net https://*.facebook.com https://*.clarity.ms https://challenges.cloudflare.com`,
+  "frame-src 'self' https://maps.google.com https://www.google.com https://challenges.cloudflare.com https://www.googletagmanager.com https://td.doubleclick.net https://bid.g.doubleclick.net https://www.facebook.com",
   "frame-ancestors 'self'",
   "base-uri 'self'",
   "form-action 'self'",
