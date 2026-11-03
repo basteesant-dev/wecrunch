@@ -54,3 +54,6 @@ next-env.d.ts
 
 # large seed videos (fetch with tools/fetch-reference-assets.mjs)
 /prisma/seed-assets/*.mp4
+
+.vercel
+.env*

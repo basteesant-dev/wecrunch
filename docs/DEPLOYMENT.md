@@ -4,14 +4,14 @@ WeCrunch deploys on its own, separately from WeCrunch. Its database, credentials
 
 ## 1. Infrastructure
 
-WeCrunch runs on **Vercel + Neon (Vercel Marketplace) + Vercel Blob**:
+WeCrunch runs on **Vercel + Supabase PostgreSQL + Supabase Storage**:
 
 | Concern | Choice |
 | --- | --- |
 | App | Vercel (Next.js, Node.js runtime). Functions run in **Singapore (`sin1`)**, next to the database (`vercel.json`) |
-| Database | Neon PostgreSQL created from the Vercel project (**Storage → Neon**), region **Singapore (aws-ap-southeast-1)**. WeCrunch-only; WeCrunch gets its own |
-| Connection | Site: `DATABASE_URL` (pooled). Migrations: `DATABASE_URL_UNPOOLED` (direct). Both are added by the integration. `DB_POOL_MAX=5` |
-| Media | Vercel Blob, a **public** store connected to the project, with `STORAGE_DRIVER=blob` |
+| Database | Supabase PostgreSQL, using a WeCrunch-only project/database |
+| Connection | Site: pooled Supabase URL. Migrations: session/unpooled Supabase URL. `DB_POOL_MAX=5` |
+| Media | Supabase Storage S3, a **public** `wecrunch` bucket, with `STORAGE_DRIVER=supabase` |
 | Email | Any SMTP service (Amazon SES, Postmark, Zoho, Google Workspace) |
 | Scheduler | `/api/cron` once a day at 00:00 UTC (05:30 IST), configured in `vercel.json` |
 | Monitoring | Uptime check on `/api/health`, Vercel logs, alerts on 5xx |
@@ -28,12 +28,12 @@ Copy `.env.example`. Every variable is documented there. On Vercel:
 
 | Variable | Purpose |
 | --- | --- |
-| `DATABASE_URL`, `DATABASE_URL_UNPOOLED` | Added by the Neon integration (with other `PG*`/`POSTGRES_*` variables the app ignores) |
+| `DATABASE_URL`, `DATABASE_URL_UNPOOLED` | Supabase pooled and session URLs |
 | `DB_POOL_MAX` | `5` |
 | `SITE_URL` | Canonical origin, e.g. `https://wecrunchfranchise.com` |
 | `APP_SECRET` | 32+ random bytes, used to hash visitor IPs |
 | `CRON_SECRET` | Bearer token for `/api/cron` |
-| `STORAGE_DRIVER=blob` + `BLOB_READ_WRITE_TOKEN` | Media storage. Vercel sets the token when the Blob store is connected; `BLOB_PREFIX` defaults to `wecrunch/` |
+| `STORAGE_DRIVER=supabase` + `SUPABASE_S3_*` or `SUPABASE_SERVICE_ROLE_KEY` | Media storage. Use the project's S3 settings or its server-only service-role key, plus the public bucket name. |
 | `MAX_VIDEO_MB` | `4`, so oversized CMS uploads get a clear message (Vercel accepts request bodies up to 4.5 MB) |
 | `SMTP_*` | Optional. Enquiries are always saved; email notification is added on top |
 | `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Optional spam protection |
@@ -69,10 +69,10 @@ The app role owns its database so `prisma migrate deploy` can apply migrations.
 ## 4. First deployment (Vercel)
 
 1. Push the repository to GitHub and **import** it in Vercel (framework: Next.js).
-2. **Storage → Create → Neon** (see above) and **Storage → Create → Blob** with **public** access, both connected to the project.
-3. **Settings → Environment Variables** (Production and Preview): `DB_POOL_MAX=5`, `SITE_URL`, `APP_SECRET`, `CRON_SECRET`, `STORAGE_DRIVER=blob`, `MAX_VIDEO_MB=4`, and `SMTP_*` / Turnstile keys if used.
+2. Create a **public** `wecrunch` bucket in the target Supabase project's Storage settings and create its S3 access key pair.
+3. **Settings → Environment Variables** (Production and Preview): `DB_POOL_MAX=5`, `SITE_URL`, `APP_SECRET`, `CRON_SECRET`, `STORAGE_DRIVER=supabase`, `SUPABASE_URL`, `SUPABASE_S3_ENDPOINT`, `SUPABASE_S3_REGION`, `SUPABASE_STORAGE_BUCKET`, either `SUPABASE_S3_ACCESS_KEY_ID` + `SUPABASE_S3_SECRET_ACCESS_KEY` or the server-only `SUPABASE_SERVICE_ROLE_KEY`, and `SMTP_*` / Turnstile keys if used.
 4. Nothing to set for build, region or cron: `vercel.json` applies migrations before each build, runs functions in Singapore (`sin1`) and calls `/api/cron` once a day (the Hobby plan allows at most one run per day). Scheduled page versions therefore go live at the next daily run, not at their exact time; on the **Pro** plan change the schedule to `*/5 * * * *` to publish within 5 minutes.
-5. **Seed once, from your machine**, so images go to Blob. With the Neon URLs, `STORAGE_DRIVER=blob` and `BLOB_READ_WRITE_TOKEN` in `.env`:
+5. **Seed once, from your machine**, so images go to Supabase Storage. With the Supabase URLs, `STORAGE_DRIVER=supabase`, and the S3 settings in `.env`:
    ```bash
    npm run db:deploy                                   # apply migrations
    ADMIN_EMAIL=... ADMIN_PASSWORD=... npm run db:seed  # once, on an empty database
